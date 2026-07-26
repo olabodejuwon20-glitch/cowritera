@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiExportDocxRouteImport } from './routes/api/export/docx'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiExportDocxRoute = ApiExportDocxRouteImport.update({
+  id: '/api/export/docx',
+  path: '/api/export/docx',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +79,36 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
+  fullPaths:
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
-  id: '__root__' | '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
+  to:
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
+  id:
+    | '__root__'
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +118,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
+  ApiExportDocxRoute: typeof ApiExportDocxRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -133,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/export/docx': {
+      id: '/api/export/docx'
+      path: '/api/export/docx'
+      fullPath: '/api/export/docx'
+      preLoaderRoute: typeof ApiExportDocxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -143,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
+  ApiExportDocxRoute: ApiExportDocxRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

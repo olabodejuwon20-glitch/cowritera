@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/export/docx")({
     handlers: {
       GET: async () => {
         const bytes = await buildDocx();
-        return new Response(bytes, {
+        return new Response(bytes as unknown as BodyInit, {
           headers: {
             "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "content-disposition": 'attachment; filename="GNS102-Term-Paper.docx"',
