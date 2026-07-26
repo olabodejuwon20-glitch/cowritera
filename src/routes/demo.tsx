@@ -403,26 +403,30 @@ function CoverPage() {
           <div className="mt-1">Group: <span className="font-semibold">{demoProject.groupName}</span></div>
         </div>
 
-        <div className="mt-14">
-          <div className="text-center font-semibold" style={{ fontSize: "12pt" }}>Group Members</div>
-          <table className="mt-3 w-full border-collapse" style={{ fontSize: "12pt" }}>
+        <div className="mt-10">
+          <div className="text-center font-semibold" style={{ fontSize: "12pt" }}>SUBMITTED BY: {demoProject.groupName}</div>
+          <table className="mt-3 w-full border-collapse" style={{ fontSize: "10.5pt" }}>
             <thead>
               <tr>
-                <th className="border border-black px-2 py-1 text-left">S/N</th>
-                <th className="border border-black px-2 py-1 text-left">Name</th>
-                <th className="border border-black px-2 py-1 text-left">Matric Number</th>
+                {["S/N", "SURNAME", "OTHER NAME", "PHONE NO", "MATRIC NO", "ROLE"].map((h) => (
+                  <th key={h} className="border border-black px-2 py-1 text-left font-bold">{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {demoProject.members.map((m, i) => (
+              {demoProject.members.map((m) => (
                 <tr key={m.matric}>
-                  <td className="border border-black px-2 py-1">{i + 1}</td>
-                  <td className="border border-black px-2 py-1">{m.name}</td>
+                  <td className="border border-black px-2 py-1">{m.sn}</td>
+                  <td className="border border-black px-2 py-1">{m.surname}</td>
+                  <td className="border border-black px-2 py-1">{m.otherName}</td>
+                  <td className="border border-black px-2 py-1">{m.phone}</td>
                   <td className="border border-black px-2 py-1">{m.matric}</td>
+                  <td className="border border-black px-2 py-1">{m.role}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div className="mt-6 text-center font-bold" style={{ fontSize: "12pt" }}>TERMS OF REFERENCE</div>
         </div>
 
         <div className="text-center mt-14 italic" style={{ fontSize: "12pt" }}>
