@@ -240,22 +240,50 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: React.Com
   );
 }
 
-function SectionRenderer({ active, onLocked }: { active: SectionKey; onLocked: () => void }) {
+function SectionRenderer({ active, onLocked, completed, onToggle }: { active: SectionKey; onLocked: () => void; completed: Set<SectionKey>; onToggle: (k: SectionKey) => void }) {
+  const withTracker = (node: React.ReactNode) => (
+    <div className="space-y-4">
+      {active !== "export" && <SectionStatusBar sectionKey={active} completed={completed.has(active)} onToggle={() => onToggle(active)} />}
+      {node}
+    </div>
+  );
   switch (active) {
-    case "project": return <ProjectInfo />;
-    case "guide": return <LecturerGuide />;
-    case "analysis": return <AIAnalysis />;
-    case "cover": return <CoverPage />;
-    case "outline": return <Outline />;
-    case "introduction": return <DocSection title="1.0 Introduction" paragraphs={sections.introduction} />;
-    case "literature": return <DocSection title="2.0 Literature Review" paragraphs={sections.literature} />;
-    case "methodology": return <DocSection title="3.0 Methodology" paragraphs={sections.methodology} />;
-    case "results": return <DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />;
-    case "discussion": return <DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />;
-    case "conclusion": return <DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />;
-    case "references": return <References />;
+    case "project": return withTracker(<ProjectInfo />);
+    case "guide": return withTracker(<LecturerGuide />);
+    case "analysis": return withTracker(<AIAnalysis />);
+    case "cover": return withTracker(<CoverPage />);
+    case "outline": return withTracker(<Outline />);
+    case "introduction": return withTracker(<DocSection title="1.0 Introduction" paragraphs={sections.introduction} />);
+    case "literature": return withTracker(<DocSection title="2.0 Literature Review" paragraphs={sections.literature} />);
+    case "methodology": return withTracker(<DocSection title="3.0 Methodology" paragraphs={sections.methodology} />);
+    case "results": return withTracker(<DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />);
+    case "discussion": return withTracker(<DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />);
+    case "conclusion": return withTracker(<DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />);
+    case "references": return withTracker(<References />);
     case "export": return <ExportView onLocked={onLocked} />;
   }
+}
+
+function SectionStatusBar({ sectionKey, completed, onToggle }: { sectionKey: SectionKey; completed: boolean; onToggle: () => void }) {
+  const label = navItems.find((i) => i.key === sectionKey)?.label ?? "";
+  return (
+    <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-2.5">
+      <div className="flex items-center gap-2 text-sm">
+        {completed ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Circle className="h-4 w-4 text-muted-foreground/60" />}
+        <span className="text-muted-foreground">
+          {label} · <span className={completed ? "text-primary font-medium" : "text-foreground"}>{completed ? "Marked complete" : "In progress"}</span>
+        </span>
+      </div>
+      <button
+        onClick={onToggle}
+        className={`text-xs font-medium rounded-lg px-3 py-1.5 transition ${
+          completed ? "text-muted-foreground hover:bg-muted" : "bg-primary text-primary-foreground hover:brightness-110"
+        }`}
+      >
+        {completed ? "Mark incomplete" : "Mark complete"}
+      </button>
+    </div>
+  );
 }
 
 function ProjectInfo() {
