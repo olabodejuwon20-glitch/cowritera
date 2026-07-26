@@ -1,0 +1,81 @@
+export const demoProject = {
+  topic: "The Influence of Parental Support on Academic Success of University Students",
+  mainTopic: "Family and Education",
+  courseCode: "GNS 102",
+  courseTitle: "Use of English & Communication Skills II",
+  lecturer: "Dr. A. O. Adeyemi",
+  faculty: "Faculty of Arts",
+  department: "Department of General Studies",
+  academicLevel: "100 Level",
+  groupName: "CEE Group 1",
+  institution: "University of Ibadan",
+  submissionLine: "A Term Paper Submitted in Partial Fulfilment of GNS 102 Completion",
+  date: "July 2026",
+  members: [
+    { name: "Chinedu M. Okoro", matric: "UI/22/1001" },
+    { name: "Aisha B. Ibrahim", matric: "UI/22/1002" },
+    { name: "Olabode J. Adewale", matric: "UI/22/1003" },
+    { name: "Ngozi P. Eze", matric: "UI/22/1004" },
+    { name: "Tunde S. Bello", matric: "UI/22/1005" },
+  ],
+  resultsSubtopic: "Significant Relationship between Parental Support and Academic Success",
+  discussionSubtopic: "Role of Parental Support on Student Academic Success",
+  lecturerInstructions:
+    "Include at least three African authors. Use British spelling. Keep body under 8 pages. Use Times New Roman size 12 with 1-inch margins on all sides.",
+};
+
+export const sections = {
+  introduction: [
+    "Academic success in higher education is shaped by a complex interplay of individual, institutional and familial factors. Among these, parental support has consistently emerged in the literature as a decisive influence on students' motivation, persistence and overall academic outcomes (Adeyemo, 2019; Fan and Chen, 2020).",
+    "In the Nigerian context, where extended family systems and communal responsibility for children's education are deeply rooted, the role of parents extends beyond financial provision to include emotional encouragement, academic guidance and moral supervision. Recent scholarship suggests that these dimensions of support jointly predict students' willingness to engage with challenging coursework and to seek help when needed.",
+    "Despite the intuitive importance of parental involvement, empirical evidence on how specific forms of support translate into measurable academic performance in the Nigerian university system remains fragmented. This paper therefore examines the influence of parental support on the academic success of university students, with particular attention to first-year undergraduates in south-western Nigeria.",
+    "The paper is structured as follows. The next section reviews existing literature on parental involvement and academic achievement. The methodology section outlines the mixed-methods design used in this study. The results and discussion sections then analyse the findings, and the paper concludes with recommendations for parents, institutions and policy makers.",
+  ],
+  literature: [
+    "The relationship between parental involvement and academic performance has been a subject of sustained scholarly inquiry for over three decades. Epstein's (1995) framework of six types of parental involvement — parenting, communicating, volunteering, learning at home, decision-making and collaborating with the community — remains a foundational reference point for contemporary studies.",
+    "African-focused research has extended this framework by highlighting culturally specific patterns of support. Adeyemo (2019) found, in a study of 420 Nigerian undergraduates, that emotional support from parents accounted for a larger share of variance in academic self-efficacy than financial support alone. Similarly, Nsamenang and Tchombe (2011) argue that in West African contexts, moral supervision and communal expectations are inseparable from formal academic support.",
+    "Comparative studies further reinforce this position. Fan and Chen (2020) synthesised findings from 52 studies and reported a consistent positive association between parental involvement and grade point averages, with effect sizes stronger when involvement was academically focused rather than purely supervisory.",
+    "Taken together, the literature suggests that parental support is a multi-dimensional construct whose academic influence depends on both the type and consistency of engagement. This paper builds on that foundation by examining these dimensions within a single Nigerian institution.",
+  ],
+  methodology: [
+    "This study adopted a mixed-methods design combining a structured survey with follow-up semi-structured interviews. The design enabled both broad statistical patterns and deeper interpretive insights to be captured.",
+    "The target population comprised 100-level undergraduate students at the University of Ibadan. A stratified random sample of 220 students was drawn across four faculties (Arts, Sciences, Social Sciences and Education) to ensure disciplinary representation. From this sample, 15 students were purposively selected for follow-up interviews.",
+    "Data were collected using a validated Parental Academic Support Scale (α = 0.87) covering emotional, academic and financial dimensions. Academic success was measured using students' cumulative grade point average at the end of the first semester. Interview data were analysed thematically following Braun and Clarke's (2006) six-phase approach.",
+    "Ethical approval was obtained from the university's research ethics committee. Participation was voluntary, informed consent was collected in writing, and all responses were anonymised prior to analysis.",
+  ],
+  results: [
+    "Descriptive analysis of the 220 responses indicated that 78% of respondents rated their parents' emotional support as 'high' or 'very high', while 61% rated academic support (help with study planning, discussing coursework) similarly. Financial support was rated 'adequate' or better by 84% of respondents.",
+    "A Pearson correlation analysis revealed a statistically significant positive relationship between overall parental support and first-semester CGPA (r = 0.42, p < 0.01). When disaggregated, emotional support (r = 0.38) and academic support (r = 0.35) contributed more strongly to the association than financial support (r = 0.19).",
+    "A multiple regression model with the three support dimensions as predictors explained 24% of the variance in CGPA (R² = 0.24, F(3, 216) = 22.7, p < 0.001), with emotional and academic support emerging as significant unique predictors.",
+    "Qualitative interviews echoed these findings. Students repeatedly described 'someone who calls to ask how school is going' and 'a parent who reads my essays' as forms of support that mattered more to them than pocket money alone.",
+  ],
+  discussion: [
+    "The results demonstrate that parental support plays a substantial role in students' academic success at the University of Ibadan, corroborating the broader literature (Fan and Chen, 2020; Adeyemo, 2019). The stronger contribution of emotional and academic support relative to financial support is a particularly important finding in a context where parents often assume that financial provision is their primary academic responsibility.",
+    "The finding that emotional support predicts CGPA more strongly than financial support suggests that policy interventions aimed at improving academic outcomes should not focus narrowly on tuition assistance. Structured programmes that help parents remain emotionally engaged with their children's university experience — for example, orientation sessions for parents of new undergraduates — may yield meaningful returns.",
+    "These results also raise implications for institutional practice. Departments could formalise low-friction communication channels that keep parents informed about academic milestones and available support services, thereby amplifying the effect of parental involvement without infringing on students' autonomy.",
+    "Limitations include reliance on self-reported support ratings and a single-institution sample. Future research should extend the design longitudinally and across multiple institutions.",
+  ],
+  conclusion: [
+    "This paper set out to examine the influence of parental support on the academic success of university students. Drawing on evidence from 220 undergraduates and 15 interview participants at the University of Ibadan, it demonstrated that emotional and academic dimensions of parental support are stronger predictors of first-semester CGPA than financial support alone.",
+    "The findings underscore the importance of a holistic view of parental involvement in higher education. For students, they highlight the value of maintaining open communication with parents. For parents, they reinforce that engagement need not be financially onerous to be academically consequential. For institutions and policy makers, they argue for the design of programmes that treat parents as partners in student success.",
+  ],
+  references: [
+    "Adeyemo, D. A. (2019). Parental involvement and academic self-efficacy among Nigerian undergraduates. Journal of Educational Research in Africa, 12(3), 45–61.",
+    "Braun, V., & Clarke, V. (2006). Using thematic analysis in psychology. Qualitative Research in Psychology, 3(2), 77–101.",
+    "Epstein, J. L. (1995). School/family/community partnerships: Caring for the children we share. Phi Delta Kappan, 76(9), 701–712.",
+    "Fan, X., & Chen, M. (2020). Parental involvement and students' academic achievement: A meta-analysis. Educational Psychology Review, 32(1), 1–22.",
+    "Nsamenang, A. B., & Tchombe, T. M. S. (2011). Handbook of African Educational Theories and Practices. Bamenda: Human Development Resource Centre.",
+    "Okonkwo, C. I. (2021). Emotional support and undergraduate persistence in West African universities. West African Journal of Higher Education, 8(2), 15–33.",
+  ],
+  outline: [
+    { n: "1.0", t: "Introduction" },
+    { n: "2.0", t: "Literature Review" },
+    { n: "3.0", t: "Methodology" },
+    { n: "4.0", t: "Results" },
+    { n: "4.1", t: "Significant Relationship between Parental Support and Academic Success" },
+    { n: "5.0", t: "Discussion" },
+    { n: "5.1", t: "Role of Parental Support on Student Academic Success" },
+    { n: "6.0", t: "Conclusion" },
+    { n: "7.0", t: "References" },
+  ],
+};

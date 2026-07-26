@@ -1,0 +1,458 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import {
+  FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
+  CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
+  Info, X, ArrowRight, ChevronLeft,
+} from "lucide-react";
+import { demoProject, sections } from "@/lib/demo-content";
+
+export const Route = createFileRoute("/demo")({
+  head: () => ({
+    meta: [
+      { title: "Interactive Demo — Co-Research AI" },
+      { name: "description", content: "Explore a fully pre-generated GNS 102 term paper inside the Co-Research AI workspace. No signup required." },
+      { property: "og:title", content: "Interactive Demo — Co-Research AI" },
+      { property: "og:description", content: "See a lecturer-compliant term paper being built inside Co-Research AI." },
+    ],
+  }),
+  component: DemoWorkspace,
+});
+
+type SectionKey =
+  | "project" | "guide" | "analysis" | "cover" | "outline" | "introduction"
+  | "literature" | "methodology" | "results" | "discussion" | "conclusion"
+  | "references" | "export";
+
+const navItems: { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: string }[] = [
+  { key: "project", label: "Project Information", icon: Info, group: "Setup" },
+  { key: "guide", label: "Lecturer Guide", icon: ShieldCheck, group: "Setup" },
+  { key: "analysis", label: "AI Analysis", icon: Sparkles, group: "Setup" },
+  { key: "cover", label: "Cover Page", icon: FileText, group: "Document" },
+  { key: "outline", label: "Outline", icon: ListOrdered, group: "Document" },
+  { key: "introduction", label: "Introduction", icon: BookOpen, group: "Document" },
+  { key: "literature", label: "Literature Review", icon: Library, group: "Document" },
+  { key: "methodology", label: "Methodology", icon: FlaskConical, group: "Document" },
+  { key: "results", label: "Results", icon: BarChart3, group: "Document" },
+  { key: "discussion", label: "Discussion", icon: MessageSquare, group: "Document" },
+  { key: "conclusion", label: "Conclusion", icon: CheckCircle2, group: "Document" },
+  { key: "references", label: "References", icon: ClipboardList, group: "Document" },
+  { key: "export", label: "Export", icon: Download, group: "Finish" },
+];
+
+function DemoWorkspace() {
+  const [active, setActive] = useState<SectionKey>("cover");
+  const [showPurchase, setShowPurchase] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-surface flex flex-col">
+      <TopBar onPurchase={() => setShowPurchase(true)} />
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[260px_1fr] lg:grid-cols-[260px_1fr_320px]">
+        <Sidebar active={active} onSelect={setActive} />
+        <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
+          <div className="p-6 md:p-10">
+            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} />
+          </div>
+        </main>
+        <RightPanel onLocked={() => setShowPurchase(true)} />
+      </div>
+      {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
+    </div>
+  );
+}
+
+function TopBar({ onPurchase }: { onPurchase: () => void }) {
+  return (
+    <div className="sticky top-0 z-30 h-16 border-b bg-background/80 backdrop-blur flex items-center px-4 md:px-6">
+      <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ChevronLeft className="h-4 w-4" /> Back to site
+      </Link>
+      <div className="mx-4 h-6 w-px bg-border" />
+      <div className="min-w-0">
+        <div className="text-xs text-muted-foreground">Demo project</div>
+        <div className="text-sm font-medium truncate">{demoProject.topic}</div>
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary-soft text-primary px-3 py-1 text-xs font-medium">
+          <Sparkles className="h-3.5 w-3.5" /> Interactive Demo
+        </span>
+        <button onClick={onPurchase} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:brightness-110">
+          Unlock Project Pass
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: SectionKey) => void }) {
+  const groups = Array.from(new Set(navItems.map((i) => i.group)));
+  return (
+    <aside className="border-r bg-background hidden md:block">
+      <div className="p-4 border-b">
+        <div className="text-xs text-muted-foreground">Completion</div>
+        <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-full w-[100%] bg-gradient-to-r from-primary to-primary-glow" />
+        </div>
+        <div className="mt-1.5 text-xs text-muted-foreground">Demo · 100% complete</div>
+      </div>
+      <nav className="p-3 space-y-6">
+        {groups.map((g) => (
+          <div key={g}>
+            <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{g}</div>
+            <ul className="space-y-1">
+              {navItems.filter((i) => i.group === g).map((item) => {
+                const Icon = item.icon;
+                const isActive = active === item.key;
+                return (
+                  <li key={item.key}>
+                    <button
+                      onClick={() => onSelect(item.key)}
+                      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition ${
+                        isActive
+                          ? "bg-primary-soft text-accent-foreground font-medium"
+                          : "text-muted-foreground hover:bg-primary-soft/60 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+
+function RightPanel({ onLocked }: { onLocked: () => void }) {
+  return (
+    <aside className="hidden lg:block border-l bg-background overflow-auto">
+      <div className="p-5 space-y-5">
+        <Panel title="AI Assistant" icon={Sparkles}>
+          <p className="text-xs text-muted-foreground">
+            Ask the assistant to rewrite, tighten, or expand any section. In this demo, responses are pre-set.
+          </p>
+          <div className="mt-3 rounded-xl border bg-surface p-3 text-xs">
+            <div className="font-medium text-primary">Suggested next</div>
+            <p className="mt-1 text-muted-foreground">"Rewrite the introduction with a stronger opening hook."</p>
+          </div>
+          <button onClick={onLocked} className="mt-3 w-full rounded-xl bg-primary text-primary-foreground text-sm py-2 hover:brightness-110">
+            Try in your project
+          </button>
+        </Panel>
+        <Panel title="Lecturer Compliance" icon={ShieldCheck}>
+          <ul className="space-y-2 text-xs">
+            {[
+              "Times New Roman, size 12",
+              "1-inch margins on all sides",
+              "Cover page with group members table",
+              "Body under 8 pages",
+              "At least 3 African authors cited",
+            ].map((r) => (
+              <li key={r} className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel title="Suggestions" icon={Wand2}>
+          <ul className="space-y-2 text-xs text-muted-foreground">
+            <li>• Strengthen the transition between §2 and §3.</li>
+            <li>• Add a comparative sentence about Kenyan studies.</li>
+            <li>• Standardise citation format across §4.</li>
+          </ul>
+        </Panel>
+      </div>
+    </aside>
+  );
+}
+
+function Panel({ title, icon: Icon, children }: { title: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border bg-card p-4">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Icon className="h-4 w-4 text-primary" /> {title}
+      </div>
+      <div className="mt-2">{children}</div>
+    </section>
+  );
+}
+
+function SectionRenderer({ active, onLocked }: { active: SectionKey; onLocked: () => void }) {
+  switch (active) {
+    case "project": return <ProjectInfo />;
+    case "guide": return <LecturerGuide />;
+    case "analysis": return <AIAnalysis />;
+    case "cover": return <CoverPage />;
+    case "outline": return <Outline />;
+    case "introduction": return <DocSection title="1.0 Introduction" paragraphs={sections.introduction} />;
+    case "literature": return <DocSection title="2.0 Literature Review" paragraphs={sections.literature} />;
+    case "methodology": return <DocSection title="3.0 Methodology" paragraphs={sections.methodology} />;
+    case "results": return <DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />;
+    case "discussion": return <DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />;
+    case "conclusion": return <DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />;
+    case "references": return <References />;
+    case "export": return <ExportView onLocked={onLocked} />;
+  }
+}
+
+function ProjectInfo() {
+  const rows = [
+    ["Research topic", demoProject.topic],
+    ["Main topic", demoProject.mainTopic],
+    ["Course", `${demoProject.courseCode} — ${demoProject.courseTitle}`],
+    ["Lecturer", demoProject.lecturer],
+    ["Institution", demoProject.institution],
+    ["Faculty", demoProject.faculty],
+    ["Department", demoProject.department],
+    ["Academic level", demoProject.academicLevel],
+    ["Group name", demoProject.groupName],
+  ];
+  return (
+    <PageWrap eyebrow="Setup" title="Project information">
+      <div className="rounded-2xl border bg-card divide-y">
+        {rows.map(([k, v]) => (
+          <div key={k} className="grid grid-cols-[180px_1fr] gap-4 px-5 py-3 text-sm">
+            <div className="text-muted-foreground">{k}</div>
+            <div className="font-medium">{v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 rounded-2xl border bg-card p-5">
+        <div className="text-sm font-medium">Group members</div>
+        <table className="mt-3 w-full text-sm">
+          <thead className="text-left text-muted-foreground">
+            <tr><th className="py-2">Name</th><th className="py-2">Matric number</th></tr>
+          </thead>
+          <tbody>
+            {demoProject.members.map((m) => (
+              <tr key={m.matric} className="border-t"><td className="py-2">{m.name}</td><td className="py-2 text-muted-foreground">{m.matric}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </PageWrap>
+  );
+}
+
+function LecturerGuide() {
+  return (
+    <PageWrap eyebrow="Setup" title="Lecturer guide">
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+          <ShieldCheck className="h-4 w-4" /> Mandatory rules from your lecturer
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">{demoProject.lecturerInstructions}</p>
+        <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+          {[
+            "Times New Roman, size 12",
+            "1-inch margins on all sides",
+            "Body must not exceed 8 pages",
+            "Cover page + references in addition",
+            "At least three African authors",
+            "British spelling throughout",
+          ].map((r) => (
+            <li key={r} className="flex items-start gap-2 rounded-lg border bg-surface p-2.5">
+              <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" /> <span>{r}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </PageWrap>
+  );
+}
+
+function AIAnalysis() {
+  return (
+    <PageWrap eyebrow="Setup" title="AI analysis">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[
+          { t: "Topic scope", d: "Well-defined, empirically tractable within an 8-page limit." },
+          { t: "Discipline fit", d: "Social sciences — education & psychology literature applies." },
+          { t: "Suggested method", d: "Mixed-methods survey + interviews at a single institution." },
+          { t: "Citation depth", d: "Aim for 6–8 sources with at least 3 African authors." },
+        ].map((c) => (
+          <div key={c.t} className="rounded-2xl border bg-card p-5">
+            <div className="text-sm font-medium">{c.t}</div>
+            <p className="mt-1.5 text-sm text-muted-foreground">{c.d}</p>
+          </div>
+        ))}
+      </div>
+    </PageWrap>
+  );
+}
+
+function CoverPage() {
+  return (
+    <PageWrap eyebrow="Document" title="Cover page" description="Preview matches the exported Word document.">
+      <div className="doc-page">
+        <div className="text-center uppercase font-bold" style={{ fontSize: "14pt" }}>{demoProject.institution}</div>
+        <div className="text-center mt-1" style={{ fontSize: "12pt" }}>{demoProject.faculty}</div>
+        <div className="text-center" style={{ fontSize: "12pt" }}>{demoProject.department}</div>
+
+        <div className="text-center mt-16 font-bold uppercase" style={{ fontSize: "13pt" }}>Topic</div>
+        <div className="text-center mt-2 font-bold" style={{ fontSize: "13pt" }}>{demoProject.topic}</div>
+
+        <div className="text-center mt-14" style={{ fontSize: "12pt" }}>
+          <div>Course Code: <span className="font-semibold">{demoProject.courseCode}</span></div>
+          <div className="mt-1">Course Title: <span className="font-semibold">{demoProject.courseTitle}</span></div>
+          <div className="mt-1">Lecturer: <span className="font-semibold">{demoProject.lecturer}</span></div>
+          <div className="mt-1">Group: <span className="font-semibold">{demoProject.groupName}</span></div>
+        </div>
+
+        <div className="mt-14">
+          <div className="text-center font-semibold" style={{ fontSize: "12pt" }}>Group Members</div>
+          <table className="mt-3 w-full border-collapse" style={{ fontSize: "12pt" }}>
+            <thead>
+              <tr>
+                <th className="border border-black px-2 py-1 text-left">S/N</th>
+                <th className="border border-black px-2 py-1 text-left">Name</th>
+                <th className="border border-black px-2 py-1 text-left">Matric Number</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demoProject.members.map((m, i) => (
+                <tr key={m.matric}>
+                  <td className="border border-black px-2 py-1">{i + 1}</td>
+                  <td className="border border-black px-2 py-1">{m.name}</td>
+                  <td className="border border-black px-2 py-1">{m.matric}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="text-center mt-14 italic" style={{ fontSize: "12pt" }}>
+          {demoProject.submissionLine}
+        </div>
+        <div className="text-center mt-8 font-semibold" style={{ fontSize: "12pt" }}>{demoProject.date}</div>
+      </div>
+    </PageWrap>
+  );
+}
+
+function Outline() {
+  return (
+    <PageWrap eyebrow="Document" title="Outline">
+      <div className="doc-page">
+        <div className="font-bold text-center" style={{ fontSize: "13pt" }}>TABLE OF CONTENTS</div>
+        <div className="mt-6 space-y-2" style={{ fontSize: "12pt" }}>
+          {sections.outline.map((o) => (
+            <div key={o.n} className="flex justify-between border-b border-dotted border-neutral-400 pb-1">
+              <span><span className="font-semibold mr-3">{o.n}</span>{o.t}</span>
+              <span className="text-neutral-500">—</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageWrap>
+  );
+}
+
+function DocSection({ title, paragraphs }: { title: string; paragraphs: string[] }) {
+  const lines = title.split("\n");
+  return (
+    <PageWrap eyebrow="Document" title={lines[0]}>
+      <div className="doc-page">
+        {lines.map((l, i) => (
+          <div key={i} className={i === 0 ? "font-bold" : "font-semibold mt-4"} style={{ fontSize: i === 0 ? "13pt" : "12pt" }}>{l}</div>
+        ))}
+        <div className="mt-4 space-y-3 text-justify">
+          {paragraphs.map((p, i) => <p key={i} style={{ textIndent: "0.5in" }}>{p}</p>)}
+        </div>
+      </div>
+    </PageWrap>
+  );
+}
+
+function References() {
+  return (
+    <PageWrap eyebrow="Document" title="7.0 References">
+      <div className="doc-page">
+        <div className="font-bold" style={{ fontSize: "13pt" }}>REFERENCES</div>
+        <ul className="mt-4 space-y-3" style={{ fontSize: "12pt" }}>
+          {sections.references.map((r, i) => (
+            <li key={i} className="pl-8 -indent-8">{r}</li>
+          ))}
+        </ul>
+      </div>
+    </PageWrap>
+  );
+}
+
+function ExportView({ onLocked }: { onLocked: () => void }) {
+  return (
+    <PageWrap eyebrow="Finish" title="Export your paper">
+      <div className="grid gap-5 sm:grid-cols-2">
+        {[
+          { title: "Microsoft Word (.docx)", desc: "Editable, with tables, headings, numbering and references preserved." },
+          { title: "PDF", desc: "Submission-ready, pixel-perfect layout for printing or upload." },
+        ].map((c) => (
+          <div key={c.title} className="rounded-2xl border bg-card p-6">
+            <FileText className="h-6 w-6 text-primary" />
+            <div className="mt-3 font-semibold">{c.title}</div>
+            <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
+            <button onClick={onLocked} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110">
+              <Download className="h-4 w-4" /> Download
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/50 p-5 text-sm">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+          <div>
+            <div className="font-medium">Downloads are only available with a Project Pass.</div>
+            <p className="text-muted-foreground mt-1">Unlock your own project to export a fully formatted term paper for your group.</p>
+          </div>
+        </div>
+      </div>
+    </PageWrap>
+  );
+}
+
+function PageWrap({ eyebrow, title, description, children }: { eyebrow: string; title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-xs uppercase tracking-widest text-primary font-medium">{eyebrow}</div>
+      <h1 className="mt-1.5 text-2xl md:text-3xl font-semibold">{title}</h1>
+      {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
+      <div className="mt-6">{children}</div>
+    </div>
+  );
+}
+
+function PurchaseModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl border bg-card p-6 shadow-[var(--shadow-elegant)]">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div className="font-semibold">Unlock your project</div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-muted" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <h2 className="mt-4 text-xl font-semibold">Get your Project Pass</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The demo shows how Co-Research AI works. To create your own term paper — with unlimited edits, regeneration
+          and Word / PDF export — unlock a Project Pass for <span className="font-semibold text-foreground">₦3,500</span>.
+        </p>
+        <div className="mt-5 flex gap-2">
+          <Link to="/register" className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm hover:brightness-110">
+            Create account <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link to="/pricing" className="rounded-xl border px-4 py-2.5 text-sm hover:bg-primary-soft">See pricing</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
