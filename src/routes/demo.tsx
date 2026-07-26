@@ -42,28 +42,60 @@ const navItems: { key: SectionKey; label: string; icon: React.ComponentType<{ cl
   { key: "export", label: "Export", icon: Download, group: "Finish" },
 ];
 
+const trackableSections: SectionKey[] = [
+  "project", "guide", "analysis", "cover", "outline", "introduction",
+  "literature", "methodology", "results", "discussion", "conclusion", "references",
+];
+
+function useCompletion() {
+  const [completed, setCompleted] = useState<Set<SectionKey>>(() => new Set(trackableSections));
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setCompleted(new Set(JSON.parse(raw) as SectionKey[]));
+    } catch { /* noop */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(completed))); } catch { /* noop */ }
+  }, [completed]);
+  const toggle = (k: SectionKey) =>
+    setCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  const reset = () => setCompleted(new Set());
+  const markAll = () => setCompleted(new Set(trackableSections));
+  return { completed, toggle, reset, markAll };
+}
+
 function DemoWorkspace() {
   const [active, setActive] = useState<SectionKey>("cover");
   const [showPurchase, setShowPurchase] = useState(false);
+  const { completed, toggle, reset, markAll } = useCompletion();
+
+  const total = trackableSections.length;
+  const done = trackableSections.filter((k) => completed.has(k)).length;
+  const percent = Math.round((done / total) * 100);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <TopBar onPurchase={() => setShowPurchase(true)} />
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[260px_1fr] lg:grid-cols-[260px_1fr_320px]">
-        <Sidebar active={active} onSelect={setActive} />
+      <TopBar onPurchase={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_320px]">
+        <Sidebar active={active} onSelect={setActive} completed={completed} percent={percent} done={done} total={total} onReset={reset} onMarkAll={markAll} />
         <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
           <div className="p-6 md:p-10">
-            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} />
+            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} completed={completed} onToggle={toggle} />
           </div>
         </main>
-        <RightPanel onLocked={() => setShowPurchase(true)} />
+        <RightPanel onLocked={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
       </div>
       {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
     </div>
   );
 }
 
-function TopBar({ onPurchase }: { onPurchase: () => void }) {
+function TopBar({ onPurchase, percent, done, total }: { onPurchase: () => void; percent: number; done: number; total: number }) {
   return (
     <div className="sticky top-0 z-30 h-16 border-b bg-background/80 backdrop-blur flex items-center px-4 md:px-6">
       <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -74,10 +106,14 @@ function TopBar({ onPurchase }: { onPurchase: () => void }) {
         <div className="text-xs text-muted-foreground">Demo project</div>
         <div className="text-sm font-medium truncate">{demoProject.topic}</div>
       </div>
-      <div className="ml-auto flex items-center gap-2">
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary-soft text-primary px-3 py-1 text-xs font-medium">
-          <Sparkles className="h-3.5 w-3.5" /> Interactive Demo
-        </span>
+      <div className="ml-auto flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+          <TrendingUp className="h-3.5 w-3.5 text-primary" />
+          <div className="h-1.5 w-28 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          <span className="text-xs font-medium tabular-nums">{done}/{total}</span>
+        </div>
         <button onClick={onPurchase} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:brightness-110">
           Unlock Project Pass
         </button>
@@ -86,16 +122,28 @@ function TopBar({ onPurchase }: { onPurchase: () => void }) {
   );
 }
 
-function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: SectionKey) => void }) {
+function Sidebar({ active, onSelect, completed, percent, done, total, onReset, onMarkAll }: {
+  active: SectionKey; onSelect: (k: SectionKey) => void;
+  completed: Set<SectionKey>; percent: number; done: number; total: number;
+  onReset: () => void; onMarkAll: () => void;
+}) {
   const groups = Array.from(new Set(navItems.map((i) => i.group)));
   return (
     <aside className="border-r bg-background hidden md:block">
       <div className="p-4 border-b">
-        <div className="text-xs text-muted-foreground">Completion</div>
-        <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-          <div className="h-full w-[100%] bg-gradient-to-r from-primary to-primary-glow" />
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium text-muted-foreground">Project progress</div>
+          <span className="text-xs tabular-nums font-semibold text-primary">{percent}%</span>
         </div>
-        <div className="mt-1.5 text-xs text-muted-foreground">Demo · 100% complete</div>
+        <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
+          <span>{done} of {total} sections</span>
+          <button onClick={done === total ? onReset : onMarkAll} className="text-primary hover:underline">
+            {done === total ? "Reset" : "Mark all"}
+          </button>
+        </div>
       </div>
       <nav className="p-3 space-y-6">
         {groups.map((g) => (
@@ -105,6 +153,7 @@ function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: Secti
               {navItems.filter((i) => i.group === g).map((item) => {
                 const Icon = item.icon;
                 const isActive = active === item.key;
+                const isDone = completed.has(item.key);
                 return (
                   <li key={item.key}>
                     <button
@@ -115,8 +164,15 @@ function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: Secti
                           : "text-muted-foreground hover:bg-primary-soft/60 hover:text-foreground"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="truncate">{item.label}</span>
+                      {item.key === "export" ? (
+                        <Icon className="h-4 w-4" />
+                      ) : isDone ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                      )}
+                      <span className="truncate flex-1 text-left">{item.label}</span>
+                      {item.key !== "export" && !isDone && <Icon className="h-3.5 w-3.5 opacity-40" />}
                     </button>
                   </li>
                 );
