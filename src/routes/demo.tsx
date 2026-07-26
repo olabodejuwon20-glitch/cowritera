@@ -185,11 +185,24 @@ function Sidebar({ active, onSelect, completed, percent, done, total, onReset, o
   );
 }
 
-function RightPanel({ onLocked }: { onLocked: () => void }) {
+function RightPanel({ onLocked, percent, done, total }: { onLocked: () => void; percent: number; done: number; total: number }) {
   return (
     <aside className="hidden lg:block border-l bg-background overflow-auto">
       <div className="p-5 space-y-5">
+        <Panel title="Progress overview" icon={TrendingUp}>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-semibold tabular-nums">{percent}%</span>
+            <span className="text-xs text-muted-foreground">{done} / {total} sections</span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {done === total ? "All sections complete — ready to export." : `${total - done} sections remaining.`}
+          </p>
+        </Panel>
         <Panel title="AI Assistant" icon={Sparkles}>
+
           <p className="text-xs text-muted-foreground">
             Ask the assistant to rewrite, tighten, or expand any section. In this demo, responses are pre-set.
           </p>
