@@ -28,12 +28,20 @@ export async function buildDocx(): Promise<Uint8Array> {
       children: [new TextRun({ text, bold: true, font: TIMES, size: TITLE })],
     });
 
-  const colWidths = [960, 5200, 3200];
+  const subheading = (text: string) =>
+    new Paragraph({
+      spacing: { before: 180, after: 100 },
+      children: [new TextRun({ text, bold: true, font: TIMES, size: SIZE })],
+    });
+
+  // 6-column members table matching FUTA template
+  const colWidths = [560, 1400, 2100, 1500, 1800, 2000]; // sums to 9360
+  const headers = ["S/N", "SURNAME", "OTHER NAME", "PHONE NO", "MATRIC NO", "ROLE"];
   const mkCell = (text: string, i: number, boldCell = false) =>
     new TableCell({
       borders: cellBorders,
       width: { size: colWidths[i], type: WidthType.DXA },
-      margins: { top: 80, bottom: 80, left: 120, right: 120 },
+      margins: { top: 80, bottom: 80, left: 100, right: 100 },
       children: [new Paragraph({ children: [new TextRun({ text, bold: boldCell, font: TIMES, size: SIZE })] })],
     });
 
@@ -41,52 +49,81 @@ export async function buildDocx(): Promise<Uint8Array> {
     width: { size: 9360, type: WidthType.DXA },
     columnWidths: colWidths,
     rows: [
-      new TableRow({ children: ["S/N", "Name", "Matric Number"].map((h, i) => mkCell(h, i, true)) }),
-      ...demoProject.members.map((m, idx) =>
-        new TableRow({ children: [String(idx + 1), m.name, m.matric].map((t, i) => mkCell(t, i)) })
+      new TableRow({ children: headers.map((h, i) => mkCell(h, i, true)) }),
+      ...demoProject.members.map((m) =>
+        new TableRow({
+          children: [String(m.sn), m.surname, m.otherName, m.phone, m.matric, m.role].map((t, i) => mkCell(t, i)),
+        })
       ),
     ],
   });
 
   const cover: any[] = [
     p(demoProject.institution.toUpperCase(), { bold: true, align: AlignmentType.CENTER, size: 28 }),
-    p(demoProject.faculty, { align: AlignmentType.CENTER }),
-    p(demoProject.department, { align: AlignmentType.CENTER }),
-    new Paragraph({ children: [new TextRun("")], spacing: { after: 400 } }),
-    p("TOPIC", { bold: true, align: AlignmentType.CENTER, size: TITLE }),
-    p(demoProject.topic, { bold: true, align: AlignmentType.CENTER, size: TITLE }),
-    new Paragraph({ children: [new TextRun("")], spacing: { after: 400 } }),
-    p(`Course Code: ${demoProject.courseCode}`, { align: AlignmentType.CENTER }),
-    p(`Course Title: ${demoProject.courseTitle}`, { align: AlignmentType.CENTER }),
-    p(`Lecturer: ${demoProject.lecturer}`, { align: AlignmentType.CENTER }),
-    p(`Group: ${demoProject.groupName}`, { align: AlignmentType.CENTER }),
+    p(demoProject.institutionAddress, { align: AlignmentType.CENTER }),
+    new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
+    p("A TERM PAPER REPORT", { bold: true, align: AlignmentType.CENTER, size: TITLE }),
+    p("ON", { align: AlignmentType.CENTER }),
+    p(demoProject.topic.toUpperCase(), { bold: true, align: AlignmentType.CENTER, size: TITLE }),
+    new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
+    p(`SUBMITTED BY: ${demoProject.groupName}`, { bold: true, align: AlignmentType.CENTER }),
     new Paragraph({ children: [new TextRun("")], spacing: { after: 200 } }),
-    p("GROUP MEMBERS", { bold: true, align: AlignmentType.CENTER }),
     membersTable,
-    new Paragraph({ children: [new TextRun("")], spacing: { after: 400 } }),
-    p(demoProject.submissionLine, { italics: true, align: AlignmentType.CENTER }),
+    new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
+    p("TERMS OF REFERENCE", { bold: true, align: AlignmentType.CENTER }),
+    p(demoProject.submissionLine, { align: AlignmentType.CENTER, italics: true }),
     p(demoProject.date, { bold: true, align: AlignmentType.CENTER }),
     new Paragraph({ children: [new PageBreak()] }),
   ];
 
+  // Outline page
+  const outline: any[] = [
+    p("OUTLINE", { bold: true, align: AlignmentType.CENTER, size: TITLE }),
+    new Paragraph({ children: [new TextRun("")], spacing: { after: 120 } }),
+    ...sections.outline.map((o) =>
+      new Paragraph({
+        spacing: { after: 80, line: 320 },
+        children: [new TextRun({ text: `${o.n ? o.n + " " : ""}${o.t}`, bold: !o.n, font: TIMES, size: SIZE })],
+      })
+    ),
+    new Paragraph({ children: [new PageBreak()] }),
+  ];
+
   const body: any[] = [];
-  const addSection = (title: string, paras: string[]) => {
-    body.push(heading(title));
-    paras.forEach((para) => body.push(p(para, { indent: true })));
-  };
-  addSection("1.0 Introduction", sections.introduction);
-  addSection("2.0 Literature Review", sections.literature);
-  addSection("3.0 Methodology", sections.methodology);
-  body.push(heading("4.0 Results"));
-  body.push(heading(`4.1 ${demoProject.resultsSubtopic}`));
+
+  // 1.0 Introduction (with inline 1.1 Aim subheading)
+  body.push(heading("1.0 INTRODUCTION"));
+  for (const para of sections.introduction) {
+    if (para === "1.1 AIM OF THE STUDY") {
+      body.push(subheading("1.1 AIM OF THE STUDY"));
+    } else {
+      body.push(p(para, { indent: true }));
+    }
+  }
+
+  body.push(heading("2.0 LITERATURE REVIEW"));
+  sections.literature.forEach((para) => body.push(p(para, { indent: true })));
+
+  body.push(heading("3.0 METHODOLOGY"));
+  sections.methodology.forEach((para) => body.push(p(para, { indent: true })));
+
+  body.push(heading("4.0 RESULTS"));
+  body.push(subheading(`4.1 ${demoProject.resultsSubtopic}`));
   sections.results.forEach((para) => body.push(p(para, { indent: true })));
-  body.push(heading("5.0 Discussion"));
-  body.push(heading(`5.1 ${demoProject.discussionSubtopic}`));
+
+  body.push(heading("5.0 DISCUSSION"));
+  body.push(subheading(`5.1 ${demoProject.discussionSubtopic}`));
   sections.discussion.forEach((para) => body.push(p(para, { indent: true })));
-  addSection("6.0 Conclusion", sections.conclusion);
+
+  body.push(heading("6.0 CONCLUSION"));
+  sections.conclusion.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(new Paragraph({ children: [new PageBreak()] }));
-  body.push(heading("7.0 References"));
+  body.push(heading("7.0 APPENDICES"));
+  sections.appendices.forEach((para) => body.push(p(para)));
+
+  body.push(new Paragraph({ children: [new PageBreak()] }));
+  body.push(heading("REFERENCES"));
   sections.references.forEach((r) =>
     body.push(
       new Paragraph({
@@ -106,7 +143,7 @@ export async function buildDocx(): Promise<Uint8Array> {
           margin: { top: inch, right: inch, bottom: inch, left: inch },
         },
       },
-      children: [...cover, ...body],
+      children: [...cover, ...outline, ...body],
     }],
   });
 
@@ -186,61 +223,89 @@ export async function buildPdf(): Promise<Uint8Array> {
     drawLine(text, { font: bold, size: 13 });
     y -= 2;
   };
+  const subheading = (text: string) => {
+    y -= 4;
+    if (y - lineH < margin) newPage();
+    drawLine(text, { font: bold, size: 12 });
+    y -= 2;
+  };
 
+  // ---------- COVER PAGE ----------
   drawLine(demoProject.institution.toUpperCase(), { font: bold, size: 14, align: "center" });
-  drawLine(demoProject.faculty, { align: "center" });
-  drawLine(demoProject.department, { align: "center" });
-  y -= 40;
-  drawLine("TOPIC", { font: bold, size: 13, align: "center" });
-  for (const line of wrap(demoProject.topic, bold, 13)) drawLine(line, { font: bold, size: 13, align: "center" });
-  y -= 30;
-  drawLine(`Course Code: ${demoProject.courseCode}`, { align: "center" });
-  drawLine(`Course Title: ${demoProject.courseTitle}`, { align: "center" });
-  drawLine(`Lecturer: ${demoProject.lecturer}`, { align: "center" });
-  drawLine(`Group: ${demoProject.groupName}`, { align: "center" });
-  y -= 20;
-  drawLine("GROUP MEMBERS", { font: bold, align: "center" });
-  y -= 6;
+  drawLine(demoProject.institutionAddress, { align: "center" });
+  y -= 24;
+  drawLine("A TERM PAPER REPORT", { font: bold, size: 13, align: "center" });
+  drawLine("ON", { align: "center" });
+  for (const line of wrap(demoProject.topic.toUpperCase(), bold, 13)) drawLine(line, { font: bold, size: 13, align: "center" });
+  y -= 18;
+  drawLine(`SUBMITTED BY: ${demoProject.groupName}`, { font: bold, align: "center" });
+  y -= 12;
 
-  const cols = [40, 260, 160];
-  const tableX = (pageW - cols.reduce((a, b) => a + b, 0)) / 2;
+  // 6-column members table
+  const cols = [30, 78, 130, 84, 100, 78]; // sums to 500pt content
+  const totalTableW = cols.reduce((a, b) => a + b, 0);
+  const tableX = (pageW - totalTableW) / 2;
   const rowH = 20;
   const drawRow = (cells: string[], isHead = false) => {
     if (y - rowH < margin) newPage();
     let x = tableX;
     for (let i = 0; i < cells.length; i++) {
       page.drawRectangle({ x, y: y - rowH, width: cols[i], height: rowH, borderColor: rgb(0, 0, 0), borderWidth: 0.7 });
-      page.drawText(cells[i], { x: x + 5, y: y - rowH + 6, size, font: isHead ? bold : font });
+      const f = isHead ? bold : font;
+      const s = isHead ? 10 : 10;
+      // truncate to fit
+      let text = cells[i];
+      while (f.widthOfTextAtSize(text, s) > cols[i] - 6 && text.length > 1) text = text.slice(0, -1);
+      page.drawText(text, { x: x + 3, y: y - rowH + 6, size: s, font: f });
       x += cols[i];
     }
     y -= rowH;
   };
-  drawRow(["S/N", "Name", "Matric Number"], true);
-  demoProject.members.forEach((m, i) => drawRow([String(i + 1), m.name, m.matric]));
+  drawRow(["S/N", "SURNAME", "OTHER NAME", "PHONE NO", "MATRIC NO", "ROLE"], true);
+  demoProject.members.forEach((m) => drawRow([String(m.sn), m.surname, m.otherName, m.phone, m.matric, m.role]));
 
-  y -= 30;
-  drawLine(demoProject.submissionLine, { font: italic, align: "center" });
-  y -= 10;
+  y -= 20;
+  drawLine("TERMS OF REFERENCE", { font: bold, align: "center" });
+  y -= 4;
+  drawWrapped(demoProject.submissionLine, { font: italic, align: "center" });
+  y -= 8;
   drawLine(demoProject.date, { font: bold, align: "center" });
 
+  // ---------- OUTLINE PAGE ----------
   newPage();
-  const addSec = (title: string, paras: string[]) => {
-    heading(title);
-    for (const para of paras) drawWrapped(para, { indent: true });
-  };
-  addSec("1.0 Introduction", sections.introduction);
-  addSec("2.0 Literature Review", sections.literature);
-  addSec("3.0 Methodology", sections.methodology);
-  heading("4.0 Results");
-  heading(`4.1 ${demoProject.resultsSubtopic}`);
+  drawLine("OUTLINE", { font: bold, size: 13, align: "center" });
+  y -= 10;
+  for (const o of sections.outline) {
+    const text = `${o.n ? o.n + "   " : ""}${o.t}`;
+    drawLine(text, { font: o.n ? font : bold });
+  }
+
+  // ---------- BODY ----------
+  newPage();
+  heading("1.0 INTRODUCTION");
+  for (const para of sections.introduction) {
+    if (para === "1.1 AIM OF THE STUDY") subheading("1.1 AIM OF THE STUDY");
+    else drawWrapped(para, { indent: true });
+  }
+  heading("2.0 LITERATURE REVIEW");
+  for (const para of sections.literature) drawWrapped(para, { indent: true });
+  heading("3.0 METHODOLOGY");
+  for (const para of sections.methodology) drawWrapped(para, { indent: true });
+  heading("4.0 RESULTS");
+  subheading(`4.1 ${demoProject.resultsSubtopic}`);
   for (const para of sections.results) drawWrapped(para, { indent: true });
-  heading("5.0 Discussion");
-  heading(`5.1 ${demoProject.discussionSubtopic}`);
+  heading("5.0 DISCUSSION");
+  subheading(`5.1 ${demoProject.discussionSubtopic}`);
   for (const para of sections.discussion) drawWrapped(para, { indent: true });
-  addSec("6.0 Conclusion", sections.conclusion);
+  heading("6.0 CONCLUSION");
+  for (const para of sections.conclusion) drawWrapped(para, { indent: true });
 
   newPage();
-  heading("7.0 References");
+  heading("7.0 APPENDICES");
+  for (const para of sections.appendices) drawWrapped(para);
+
+  newPage();
+  heading("REFERENCES");
   for (const r of sections.references) {
     const lines = wrap(r, font, size, contentW - 36);
     lines.forEach((l, i) => drawLine(l, { indent: i === 0 ? 0 : 36 }));
