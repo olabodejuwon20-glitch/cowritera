@@ -444,9 +444,9 @@ function Outline() {
       <div className="doc-page">
         <div className="font-bold text-center" style={{ fontSize: "13pt" }}>TABLE OF CONTENTS</div>
         <div className="mt-6 space-y-2" style={{ fontSize: "12pt" }}>
-          {sections.outline.map((o) => (
-            <div key={o.n} className="flex justify-between border-b border-dotted border-neutral-400 pb-1">
-              <span><span className="font-semibold mr-3">{o.n}</span>{o.t}</span>
+          {sections.outline.map((o, i) => (
+            <div key={`${o.n}-${i}`} className="flex justify-between border-b border-dotted border-neutral-400 pb-1">
+              <span>{o.n ? <><span className="font-semibold mr-3">{o.n}</span>{o.t}</> : <span className="font-bold">{o.t}</span>}</span>
               <span className="text-neutral-500">—</span>
             </div>
           ))}
