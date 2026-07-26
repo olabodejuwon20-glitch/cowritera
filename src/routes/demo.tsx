@@ -484,30 +484,71 @@ function References() {
 }
 
 function ExportView({ onLocked }: { onLocked: () => void }) {
+  const [busy, setBusy] = useState<null | "docx" | "pdf">(null);
+
+  const handleDownload = async (kind: "docx" | "pdf") => {
+    setBusy(kind);
+    try {
+      const res = await fetch(`/api/export/${kind}`);
+      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GNS102-Term-Paper.${kind}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Could not generate the file. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const cards: { kind: "docx" | "pdf"; title: string; desc: string }[] = [
+    { kind: "docx", title: "Microsoft Word (.docx)", desc: "Editable, Times New Roman 12, 1-inch margins, cover page with group members table." },
+    { kind: "pdf", title: "PDF", desc: "Submission-ready, pixel-perfect layout for printing or upload." },
+  ];
+
   return (
     <PageWrap eyebrow="Finish" title="Export your paper">
+      <div className="rounded-2xl border border-primary/30 bg-primary-soft/40 p-4 text-sm flex items-start gap-3 mb-5">
+        <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+        <div>
+          <div className="font-medium">Demo export enabled</div>
+          <p className="text-muted-foreground mt-0.5">Try the real export using this demo project — the file follows the exact GNS 102 template.</p>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        {[
-          { title: "Microsoft Word (.docx)", desc: "Editable, with tables, headings, numbering and references preserved." },
-          { title: "PDF", desc: "Submission-ready, pixel-perfect layout for printing or upload." },
-        ].map((c) => (
-          <div key={c.title} className="rounded-2xl border bg-card p-6">
+        {cards.map((c) => (
+          <div key={c.kind} className="rounded-2xl border bg-card p-6">
             <FileText className="h-6 w-6 text-primary" />
             <div className="mt-3 font-semibold">{c.title}</div>
             <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
-            <button onClick={onLocked} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110">
-              <Download className="h-4 w-4" /> Download
+            <button
+              onClick={() => handleDownload(c.kind)}
+              disabled={busy !== null}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110 disabled:opacity-60"
+            >
+              {busy === c.kind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {busy === c.kind ? "Preparing..." : "Download"}
             </button>
           </div>
         ))}
       </div>
-      <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/50 p-5 text-sm">
+      <div className="mt-6 rounded-2xl border bg-card p-5 text-sm">
         <div className="flex items-start gap-3">
           <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
-          <div>
-            <div className="font-medium">Downloads are only available with a Project Pass.</div>
-            <p className="text-muted-foreground mt-1">Unlock your own project to export a fully formatted term paper for your group.</p>
+          <div className="flex-1">
+            <div className="font-medium">Want to export your own topic?</div>
+            <p className="text-muted-foreground mt-1">Unlock a Project Pass to create and export a term paper for your group.</p>
           </div>
+          <button onClick={onLocked} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110 whitespace-nowrap">
+            Unlock ₦3,500
+          </button>
         </div>
       </div>
     </PageWrap>
