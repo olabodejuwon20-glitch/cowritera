@@ -567,6 +567,32 @@ function PageWrap({ eyebrow, title, description, children }: { eyebrow: string; 
 }
 
 function PurchaseModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const startCheckout = async () => {
+    setError(null);
+    if (!email.includes("@")) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/paystack/init", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, amount: 3500 }),
+      });
+      const data = (await res.json()) as { authorization_url?: string; error?: string };
+      if (!res.ok || !data.authorization_url) throw new Error(data.error ?? "Checkout failed");
+      window.location.href = data.authorization_url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-3xl border bg-card p-6 shadow-[var(--shadow-elegant)]">
@@ -583,14 +609,28 @@ function PurchaseModal({ onClose }: { onClose: () => void }) {
         </div>
         <h2 className="mt-4 text-xl font-semibold">Get your Project Pass</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The demo shows how Co-Research AI works. To create your own term paper — with unlimited edits, regeneration
-          and Word / PDF export — unlock a Project Pass for <span className="font-semibold text-foreground">₦3,500</span>.
+          One-time payment for one active term paper project. Unlimited edits, regeneration and Word / PDF export for{" "}
+          <span className="font-semibold text-foreground">₦3,500</span>.
         </p>
-        <div className="mt-5 flex gap-2">
-          <Link to="/register" className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm hover:brightness-110">
-            Create account <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link to="/pricing" className="rounded-xl border px-4 py-2.5 text-sm hover:bg-primary-soft">See pricing</Link>
+        <label className="mt-5 block text-xs font-medium text-muted-foreground">Email for receipt</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="mt-1.5 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+        />
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        <button
+          onClick={startCheckout}
+          disabled={loading}
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:brightness-110 disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {loading ? "Redirecting to Paystack..." : "Pay ₦3,500 with Paystack"}
+        </button>
+        <div className="mt-3 text-center">
+          <Link to="/pricing" className="text-xs text-muted-foreground hover:text-primary">See full pricing details</Link>
         </div>
       </div>
     </div>
