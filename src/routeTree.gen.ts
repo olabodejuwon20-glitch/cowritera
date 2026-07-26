@@ -15,6 +15,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPaystackInitRouteImport } from './routes/api/paystack/init'
+import { Route as ApiExportPdfRouteImport } from './routes/api/export/pdf'
+import { Route as ApiExportDocxRouteImport } from './routes/api/export/docx'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -46,6 +49,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPaystackInitRoute = ApiPaystackInitRouteImport.update({
+  id: '/api/paystack/init',
+  path: '/api/paystack/init',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiExportPdfRoute = ApiExportPdfRouteImport.update({
+  id: '/api/export/pdf',
+  path: '/api/export/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiExportDocxRoute = ApiExportDocxRouteImport.update({
+  id: '/api/export/docx',
+  path: '/api/export/docx',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +72,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
+  '/api/export/pdf': typeof ApiExportPdfRoute
+  '/api/paystack/init': typeof ApiPaystackInitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +83,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
+  '/api/export/pdf': typeof ApiExportPdfRoute
+  '/api/paystack/init': typeof ApiPaystackInitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +95,44 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api/export/docx': typeof ApiExportDocxRoute
+  '/api/export/pdf': typeof ApiExportPdfRoute
+  '/api/paystack/init': typeof ApiPaystackInitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
+  fullPaths:
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
+    | '/api/export/pdf'
+    | '/api/paystack/init'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
-  id: '__root__' | '/' | '/demo' | '/faq' | '/login' | '/pricing' | '/register'
+  to:
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
+    | '/api/export/pdf'
+    | '/api/paystack/init'
+  id:
+    | '__root__'
+    | '/'
+    | '/demo'
+    | '/faq'
+    | '/login'
+    | '/pricing'
+    | '/register'
+    | '/api/export/docx'
+    | '/api/export/pdf'
+    | '/api/paystack/init'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +142,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
+  ApiExportDocxRoute: typeof ApiExportDocxRoute
+  ApiExportPdfRoute: typeof ApiExportPdfRoute
+  ApiPaystackInitRoute: typeof ApiPaystackInitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -133,6 +191,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/paystack/init': {
+      id: '/api/paystack/init'
+      path: '/api/paystack/init'
+      fullPath: '/api/paystack/init'
+      preLoaderRoute: typeof ApiPaystackInitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/export/pdf': {
+      id: '/api/export/pdf'
+      path: '/api/export/pdf'
+      fullPath: '/api/export/pdf'
+      preLoaderRoute: typeof ApiExportPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/export/docx': {
+      id: '/api/export/docx'
+      path: '/api/export/docx'
+      fullPath: '/api/export/docx'
+      preLoaderRoute: typeof ApiExportDocxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -143,6 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
+  ApiExportDocxRoute: ApiExportDocxRoute,
+  ApiExportPdfRoute: ApiExportPdfRoute,
+  ApiPaystackInitRoute: ApiPaystackInitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

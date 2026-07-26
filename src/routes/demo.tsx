@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
   CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
-  Info, X, ArrowRight, ChevronLeft,
+  Info, X, ChevronLeft, Circle, Loader2, TrendingUp,
 } from "lucide-react";
 import { demoProject, sections } from "@/lib/demo-content";
+
+const STORAGE_KEY = "coresearch.demo.completed.v1";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -40,28 +42,60 @@ const navItems: { key: SectionKey; label: string; icon: React.ComponentType<{ cl
   { key: "export", label: "Export", icon: Download, group: "Finish" },
 ];
 
+const trackableSections: SectionKey[] = [
+  "project", "guide", "analysis", "cover", "outline", "introduction",
+  "literature", "methodology", "results", "discussion", "conclusion", "references",
+];
+
+function useCompletion() {
+  const [completed, setCompleted] = useState<Set<SectionKey>>(() => new Set(trackableSections));
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setCompleted(new Set(JSON.parse(raw) as SectionKey[]));
+    } catch { /* noop */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(completed))); } catch { /* noop */ }
+  }, [completed]);
+  const toggle = (k: SectionKey) =>
+    setCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  const reset = () => setCompleted(new Set());
+  const markAll = () => setCompleted(new Set(trackableSections));
+  return { completed, toggle, reset, markAll };
+}
+
 function DemoWorkspace() {
   const [active, setActive] = useState<SectionKey>("cover");
   const [showPurchase, setShowPurchase] = useState(false);
+  const { completed, toggle, reset, markAll } = useCompletion();
+
+  const total = trackableSections.length;
+  const done = trackableSections.filter((k) => completed.has(k)).length;
+  const percent = Math.round((done / total) * 100);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <TopBar onPurchase={() => setShowPurchase(true)} />
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[260px_1fr] lg:grid-cols-[260px_1fr_320px]">
-        <Sidebar active={active} onSelect={setActive} />
+      <TopBar onPurchase={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_320px]">
+        <Sidebar active={active} onSelect={setActive} completed={completed} percent={percent} done={done} total={total} onReset={reset} onMarkAll={markAll} />
         <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
           <div className="p-6 md:p-10">
-            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} />
+            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} completed={completed} onToggle={toggle} />
           </div>
         </main>
-        <RightPanel onLocked={() => setShowPurchase(true)} />
+        <RightPanel onLocked={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
       </div>
       {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
     </div>
   );
 }
 
-function TopBar({ onPurchase }: { onPurchase: () => void }) {
+function TopBar({ onPurchase, percent, done, total }: { onPurchase: () => void; percent: number; done: number; total: number }) {
   return (
     <div className="sticky top-0 z-30 h-16 border-b bg-background/80 backdrop-blur flex items-center px-4 md:px-6">
       <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -72,10 +106,14 @@ function TopBar({ onPurchase }: { onPurchase: () => void }) {
         <div className="text-xs text-muted-foreground">Demo project</div>
         <div className="text-sm font-medium truncate">{demoProject.topic}</div>
       </div>
-      <div className="ml-auto flex items-center gap-2">
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary-soft text-primary px-3 py-1 text-xs font-medium">
-          <Sparkles className="h-3.5 w-3.5" /> Interactive Demo
-        </span>
+      <div className="ml-auto flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+          <TrendingUp className="h-3.5 w-3.5 text-primary" />
+          <div className="h-1.5 w-28 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          <span className="text-xs font-medium tabular-nums">{done}/{total}</span>
+        </div>
         <button onClick={onPurchase} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:brightness-110">
           Unlock Project Pass
         </button>
@@ -84,16 +122,28 @@ function TopBar({ onPurchase }: { onPurchase: () => void }) {
   );
 }
 
-function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: SectionKey) => void }) {
+function Sidebar({ active, onSelect, completed, percent, done, total, onReset, onMarkAll }: {
+  active: SectionKey; onSelect: (k: SectionKey) => void;
+  completed: Set<SectionKey>; percent: number; done: number; total: number;
+  onReset: () => void; onMarkAll: () => void;
+}) {
   const groups = Array.from(new Set(navItems.map((i) => i.group)));
   return (
     <aside className="border-r bg-background hidden md:block">
       <div className="p-4 border-b">
-        <div className="text-xs text-muted-foreground">Completion</div>
-        <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-          <div className="h-full w-[100%] bg-gradient-to-r from-primary to-primary-glow" />
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium text-muted-foreground">Project progress</div>
+          <span className="text-xs tabular-nums font-semibold text-primary">{percent}%</span>
         </div>
-        <div className="mt-1.5 text-xs text-muted-foreground">Demo · 100% complete</div>
+        <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
+          <span>{done} of {total} sections</span>
+          <button onClick={done === total ? onReset : onMarkAll} className="text-primary hover:underline">
+            {done === total ? "Reset" : "Mark all"}
+          </button>
+        </div>
       </div>
       <nav className="p-3 space-y-6">
         {groups.map((g) => (
@@ -103,6 +153,7 @@ function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: Secti
               {navItems.filter((i) => i.group === g).map((item) => {
                 const Icon = item.icon;
                 const isActive = active === item.key;
+                const isDone = completed.has(item.key);
                 return (
                   <li key={item.key}>
                     <button
@@ -113,8 +164,15 @@ function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: Secti
                           : "text-muted-foreground hover:bg-primary-soft/60 hover:text-foreground"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="truncate">{item.label}</span>
+                      {item.key === "export" ? (
+                        <Icon className="h-4 w-4" />
+                      ) : isDone ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                      )}
+                      <span className="truncate flex-1 text-left">{item.label}</span>
+                      {item.key !== "export" && !isDone && <Icon className="h-3.5 w-3.5 opacity-40" />}
                     </button>
                   </li>
                 );
@@ -127,11 +185,24 @@ function Sidebar({ active, onSelect }: { active: SectionKey; onSelect: (k: Secti
   );
 }
 
-function RightPanel({ onLocked }: { onLocked: () => void }) {
+function RightPanel({ onLocked, percent, done, total }: { onLocked: () => void; percent: number; done: number; total: number }) {
   return (
     <aside className="hidden lg:block border-l bg-background overflow-auto">
       <div className="p-5 space-y-5">
+        <Panel title="Progress overview" icon={TrendingUp}>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-semibold tabular-nums">{percent}%</span>
+            <span className="text-xs text-muted-foreground">{done} / {total} sections</span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {done === total ? "All sections complete — ready to export." : `${total - done} sections remaining.`}
+          </p>
+        </Panel>
         <Panel title="AI Assistant" icon={Sparkles}>
+
           <p className="text-xs text-muted-foreground">
             Ask the assistant to rewrite, tighten, or expand any section. In this demo, responses are pre-set.
           </p>
@@ -182,22 +253,50 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: React.Com
   );
 }
 
-function SectionRenderer({ active, onLocked }: { active: SectionKey; onLocked: () => void }) {
+function SectionRenderer({ active, onLocked, completed, onToggle }: { active: SectionKey; onLocked: () => void; completed: Set<SectionKey>; onToggle: (k: SectionKey) => void }) {
+  const withTracker = (node: React.ReactNode) => (
+    <div className="space-y-4">
+      {active !== "export" && <SectionStatusBar sectionKey={active} completed={completed.has(active)} onToggle={() => onToggle(active)} />}
+      {node}
+    </div>
+  );
   switch (active) {
-    case "project": return <ProjectInfo />;
-    case "guide": return <LecturerGuide />;
-    case "analysis": return <AIAnalysis />;
-    case "cover": return <CoverPage />;
-    case "outline": return <Outline />;
-    case "introduction": return <DocSection title="1.0 Introduction" paragraphs={sections.introduction} />;
-    case "literature": return <DocSection title="2.0 Literature Review" paragraphs={sections.literature} />;
-    case "methodology": return <DocSection title="3.0 Methodology" paragraphs={sections.methodology} />;
-    case "results": return <DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />;
-    case "discussion": return <DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />;
-    case "conclusion": return <DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />;
-    case "references": return <References />;
+    case "project": return withTracker(<ProjectInfo />);
+    case "guide": return withTracker(<LecturerGuide />);
+    case "analysis": return withTracker(<AIAnalysis />);
+    case "cover": return withTracker(<CoverPage />);
+    case "outline": return withTracker(<Outline />);
+    case "introduction": return withTracker(<DocSection title="1.0 Introduction" paragraphs={sections.introduction} />);
+    case "literature": return withTracker(<DocSection title="2.0 Literature Review" paragraphs={sections.literature} />);
+    case "methodology": return withTracker(<DocSection title="3.0 Methodology" paragraphs={sections.methodology} />);
+    case "results": return withTracker(<DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />);
+    case "discussion": return withTracker(<DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />);
+    case "conclusion": return withTracker(<DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />);
+    case "references": return withTracker(<References />);
     case "export": return <ExportView onLocked={onLocked} />;
   }
+}
+
+function SectionStatusBar({ sectionKey, completed, onToggle }: { sectionKey: SectionKey; completed: boolean; onToggle: () => void }) {
+  const label = navItems.find((i) => i.key === sectionKey)?.label ?? "";
+  return (
+    <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-2.5">
+      <div className="flex items-center gap-2 text-sm">
+        {completed ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Circle className="h-4 w-4 text-muted-foreground/60" />}
+        <span className="text-muted-foreground">
+          {label} · <span className={completed ? "text-primary font-medium" : "text-foreground"}>{completed ? "Marked complete" : "In progress"}</span>
+        </span>
+      </div>
+      <button
+        onClick={onToggle}
+        className={`text-xs font-medium rounded-lg px-3 py-1.5 transition ${
+          completed ? "text-muted-foreground hover:bg-muted" : "bg-primary text-primary-foreground hover:brightness-110"
+        }`}
+      >
+        {completed ? "Mark incomplete" : "Mark complete"}
+      </button>
+    </div>
+  );
 }
 
 function ProjectInfo() {
@@ -385,30 +484,71 @@ function References() {
 }
 
 function ExportView({ onLocked }: { onLocked: () => void }) {
+  const [busy, setBusy] = useState<null | "docx" | "pdf">(null);
+
+  const handleDownload = async (kind: "docx" | "pdf") => {
+    setBusy(kind);
+    try {
+      const res = await fetch(`/api/export/${kind}`);
+      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GNS102-Term-Paper.${kind}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Could not generate the file. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const cards: { kind: "docx" | "pdf"; title: string; desc: string }[] = [
+    { kind: "docx", title: "Microsoft Word (.docx)", desc: "Editable, Times New Roman 12, 1-inch margins, cover page with group members table." },
+    { kind: "pdf", title: "PDF", desc: "Submission-ready, pixel-perfect layout for printing or upload." },
+  ];
+
   return (
     <PageWrap eyebrow="Finish" title="Export your paper">
+      <div className="rounded-2xl border border-primary/30 bg-primary-soft/40 p-4 text-sm flex items-start gap-3 mb-5">
+        <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+        <div>
+          <div className="font-medium">Demo export enabled</div>
+          <p className="text-muted-foreground mt-0.5">Try the real export using this demo project — the file follows the exact GNS 102 template.</p>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        {[
-          { title: "Microsoft Word (.docx)", desc: "Editable, with tables, headings, numbering and references preserved." },
-          { title: "PDF", desc: "Submission-ready, pixel-perfect layout for printing or upload." },
-        ].map((c) => (
-          <div key={c.title} className="rounded-2xl border bg-card p-6">
+        {cards.map((c) => (
+          <div key={c.kind} className="rounded-2xl border bg-card p-6">
             <FileText className="h-6 w-6 text-primary" />
             <div className="mt-3 font-semibold">{c.title}</div>
             <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
-            <button onClick={onLocked} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110">
-              <Download className="h-4 w-4" /> Download
+            <button
+              onClick={() => handleDownload(c.kind)}
+              disabled={busy !== null}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110 disabled:opacity-60"
+            >
+              {busy === c.kind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {busy === c.kind ? "Preparing..." : "Download"}
             </button>
           </div>
         ))}
       </div>
-      <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/50 p-5 text-sm">
+      <div className="mt-6 rounded-2xl border bg-card p-5 text-sm">
         <div className="flex items-start gap-3">
           <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
-          <div>
-            <div className="font-medium">Downloads are only available with a Project Pass.</div>
-            <p className="text-muted-foreground mt-1">Unlock your own project to export a fully formatted term paper for your group.</p>
+          <div className="flex-1">
+            <div className="font-medium">Want to export your own topic?</div>
+            <p className="text-muted-foreground mt-1">Unlock a Project Pass to create and export a term paper for your group.</p>
           </div>
+          <button onClick={onLocked} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110 whitespace-nowrap">
+            Unlock ₦3,500
+          </button>
         </div>
       </div>
     </PageWrap>
@@ -427,6 +567,32 @@ function PageWrap({ eyebrow, title, description, children }: { eyebrow: string; 
 }
 
 function PurchaseModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const startCheckout = async () => {
+    setError(null);
+    if (!email.includes("@")) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/paystack/init", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, amount: 3500 }),
+      });
+      const data = (await res.json()) as { authorization_url?: string; error?: string };
+      if (!res.ok || !data.authorization_url) throw new Error(data.error ?? "Checkout failed");
+      window.location.href = data.authorization_url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-3xl border bg-card p-6 shadow-[var(--shadow-elegant)]">
@@ -443,14 +609,28 @@ function PurchaseModal({ onClose }: { onClose: () => void }) {
         </div>
         <h2 className="mt-4 text-xl font-semibold">Get your Project Pass</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The demo shows how Co-Research AI works. To create your own term paper — with unlimited edits, regeneration
-          and Word / PDF export — unlock a Project Pass for <span className="font-semibold text-foreground">₦3,500</span>.
+          One-time payment for one active term paper project. Unlimited edits, regeneration and Word / PDF export for{" "}
+          <span className="font-semibold text-foreground">₦3,500</span>.
         </p>
-        <div className="mt-5 flex gap-2">
-          <Link to="/register" className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm hover:brightness-110">
-            Create account <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link to="/pricing" className="rounded-xl border px-4 py-2.5 text-sm hover:bg-primary-soft">See pricing</Link>
+        <label className="mt-5 block text-xs font-medium text-muted-foreground">Email for receipt</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="mt-1.5 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+        />
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        <button
+          onClick={startCheckout}
+          disabled={loading}
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:brightness-110 disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {loading ? "Redirecting to Paystack..." : "Pay ₦3,500 with Paystack"}
+        </button>
+        <div className="mt-3 text-center">
+          <Link to="/pricing" className="text-xs text-muted-foreground hover:text-primary">See full pricing details</Link>
         </div>
       </div>
     </div>
