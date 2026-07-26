@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
   CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
-  Info, X, ArrowRight, ChevronLeft, Circle, Loader2, TrendingUp,
+  Info, X, ChevronLeft, Circle, Loader2, TrendingUp,
 } from "lucide-react";
 import { demoProject, sections } from "@/lib/demo-content";
 
