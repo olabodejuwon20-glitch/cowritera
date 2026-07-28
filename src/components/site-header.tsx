@@ -12,7 +12,12 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  return (
+  const { user } = useSession();
+  const navigate = useNavigate();
+  async function handleSignOut() {
+    await signOut();
+    navigate({ to: "/" });
+  }
     <header className="sticky top-0 z-40 w-full glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 group">
