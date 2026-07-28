@@ -47,7 +47,7 @@ function Hero() {
             <Sparkles className="h-3.5 w-3.5 text-primary" /> Built for GNS 102 term papers
           </span>
           <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05]">
-            Write a lecturer-compliant <span className="gradient-text">term paper</span> — without the panic.
+            Write a lecturer-compliant <span className="gradient-text">term paper</span>&nbsp;without the panic.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground max-w-xl">
             Co-Research AI turns your topic, lecturer instructions and group details into a properly formatted,
