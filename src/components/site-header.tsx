@@ -79,8 +79,17 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-2 flex gap-2">
-              <Link to="/login" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Log in</Link>
-              <Link to="/register" className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground" onClick={() => setOpen(false)}>Get started</Link>
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Dashboard</Link>
+                  <button onClick={() => { setOpen(false); void handleSignOut(); }} className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Log in</Link>
+                  <Link to="/register" className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground" onClick={() => setOpen(false)}>Get started</Link>
+                </>
+              )}
             </div>
           </div>
         </div>
