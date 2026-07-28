@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/paystack/init")({
         if (!secret) {
           return Response.json({ error: "Paystack not configured" }, { status: 500 });
         }
-        let body: { email?: string; amount?: number; callback_url?: string } = {};
+        let body: { email?: string; amount?: number; callback_url?: string; paper_id?: string } = {};
         try { body = await request.json(); } catch { /* noop */ }
 
         const email = (body.email ?? "").trim();
