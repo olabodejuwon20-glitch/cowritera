@@ -3,9 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
   CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
-  Info, X, ChevronLeft, Circle, Loader2, TrendingUp,
+  Info, X, ChevronLeft, Circle, Loader2, TrendingUp, Eye, Plus, Trash2,
+  AlertTriangle, XCircle,
 } from "lucide-react";
-import { demoProject, sections } from "@/lib/demo-content";
+import { demoProject, sections as staticSections } from "@/lib/demo-content";
+import {
+  usePaperDraft, validateDraft, estimateBodyPages, PAGE_LIMIT,
+  type PaperDraft, type ArrayKey, type Check,
+} from "@/lib/paper-draft";
 
 const STORAGE_KEY = "coresearch.demo.completed.v1";
 
@@ -24,7 +29,7 @@ export const Route = createFileRoute("/demo")({
 type SectionKey =
   | "project" | "guide" | "analysis" | "cover" | "outline" | "introduction"
   | "literature" | "methodology" | "results" | "discussion" | "conclusion"
-  | "references" | "export";
+  | "references" | "appendices" | "export";
 
 const navItems: { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: string }[] = [
   { key: "project", label: "Project Information", icon: Info, group: "Setup" },
@@ -38,13 +43,14 @@ const navItems: { key: SectionKey; label: string; icon: React.ComponentType<{ cl
   { key: "results", label: "Results", icon: BarChart3, group: "Document" },
   { key: "discussion", label: "Discussion", icon: MessageSquare, group: "Document" },
   { key: "conclusion", label: "Conclusion", icon: CheckCircle2, group: "Document" },
-  { key: "references", label: "References", icon: ClipboardList, group: "Document" },
+  { key: "appendices", label: "Appendices", icon: ClipboardList, group: "Document" },
+  { key: "references", label: "References", icon: Library, group: "Document" },
   { key: "export", label: "Export", icon: Download, group: "Finish" },
 ];
 
 const trackableSections: SectionKey[] = [
   "project", "guide", "analysis", "cover", "outline", "introduction",
-  "literature", "methodology", "results", "discussion", "conclusion", "references",
+  "literature", "methodology", "results", "discussion", "conclusion", "appendices", "references",
 ];
 
 function useCompletion() {
@@ -73,22 +79,40 @@ function DemoWorkspace() {
   const [active, setActive] = useState<SectionKey>("cover");
   const [showPurchase, setShowPurchase] = useState(false);
   const { completed, toggle, reset, markAll } = useCompletion();
+  const paper = usePaperDraft();
 
   const total = trackableSections.length;
   const done = trackableSections.filter((k) => completed.has(k)).length;
   const percent = Math.round((done / total) * 100);
+  const checks = useMemo(() => validateDraft(paper.draft), [paper.draft]);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <TopBar onPurchase={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_320px]">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_340px]">
         <Sidebar active={active} onSelect={setActive} completed={completed} percent={percent} done={done} total={total} onReset={reset} onMarkAll={markAll} />
         <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
           <div className="p-6 md:p-10">
-            <SectionRenderer active={active} onLocked={() => setShowPurchase(true)} completed={completed} onToggle={toggle} />
+            <SectionRenderer
+              active={active}
+              onLocked={() => setShowPurchase(true)}
+              completed={completed}
+              onToggle={toggle}
+              paper={paper}
+              checks={checks}
+              goToValidator={() => setActive("export")}
+            />
           </div>
         </main>
-        <RightPanel onLocked={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
+        <RightPanel
+          onLocked={() => setShowPurchase(true)}
+          percent={percent}
+          done={done}
+          total={total}
+          draft={paper.draft}
+          checks={checks}
+          onOpenSection={setActive}
+        />
       </div>
       {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
     </div>
@@ -185,58 +209,61 @@ function Sidebar({ active, onSelect, completed, percent, done, total, onReset, o
   );
 }
 
-function RightPanel({ onLocked, percent, done, total }: { onLocked: () => void; percent: number; done: number; total: number }) {
+type RightTab = "overview" | "preview" | "validator";
+
+function RightPanel({ onLocked, percent, done, total, draft, checks, onOpenSection }: {
+  onLocked: () => void; percent: number; done: number; total: number;
+  draft: PaperDraft; checks: Check[]; onOpenSection: (k: SectionKey) => void;
+}) {
+  const [tab, setTab] = useState<RightTab>("preview");
+  const failing = checks.filter((c) => c.status !== "pass").length;
+
   return (
     <aside className="hidden lg:block border-l bg-background overflow-auto">
-      <div className="p-5 space-y-5">
-        <Panel title="Progress overview" icon={TrendingUp}>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-semibold tabular-nums">{percent}%</span>
-            <span className="text-xs text-muted-foreground">{done} / {total} sections</span>
-          </div>
-          <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {done === total ? "All sections complete — ready to export." : `${total - done} sections remaining.`}
-          </p>
-        </Panel>
-        <Panel title="AI Assistant" icon={Sparkles}>
-
-          <p className="text-xs text-muted-foreground">
-            Ask the assistant to rewrite, tighten, or expand any section. In this demo, responses are pre-set.
-          </p>
-          <div className="mt-3 rounded-xl border bg-surface p-3 text-xs">
-            <div className="font-medium text-primary">Suggested next</div>
-            <p className="mt-1 text-muted-foreground">"Rewrite the introduction with a stronger opening hook."</p>
-          </div>
-          <button onClick={onLocked} className="mt-3 w-full rounded-xl bg-primary text-primary-foreground text-sm py-2 hover:brightness-110">
-            Try in your project
+      <div className="sticky top-0 z-10 bg-background border-b p-3 flex gap-1">
+        {([
+          { id: "overview", label: "Overview" },
+          { id: "preview", label: "Live preview" },
+          { id: "validator", label: failing ? `Validator · ${failing}` : "Validator" },
+        ] as { id: RightTab; label: string }[]).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition ${
+              tab === t.id ? "bg-primary-soft text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {t.label}
           </button>
-        </Panel>
-        <Panel title="Lecturer Compliance" icon={ShieldCheck}>
-          <ul className="space-y-2 text-xs">
-            {[
-              "Times New Roman, size 12",
-              "1-inch margins on all sides",
-              "Cover page with group members table",
-              "Body under 8 pages",
-              "At least 3 African authors cited",
-            ].map((r) => (
-              <li key={r} className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-        <Panel title="Suggestions" icon={Wand2}>
-          <ul className="space-y-2 text-xs text-muted-foreground">
-            <li>• Strengthen the transition between §2 and §3.</li>
-            <li>• Add a comparative sentence about Kenyan studies.</li>
-            <li>• Standardise citation format across §4.</li>
-          </ul>
-        </Panel>
+        ))}
+      </div>
+      <div className="p-5 space-y-5">
+        {tab === "overview" && (
+          <>
+            <Panel title="Progress overview" icon={TrendingUp}>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-semibold tabular-nums">{percent}%</span>
+                <span className="text-xs text-muted-foreground">{done} / {total} sections</span>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${percent}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {done === total ? "All sections complete — ready to export." : `${total - done} sections remaining.`}
+              </p>
+            </Panel>
+            <Panel title="AI Assistant" icon={Sparkles}>
+              <p className="text-xs text-muted-foreground">
+                Ask the assistant to rewrite, tighten, or expand any section. In this demo, responses are pre-set.
+              </p>
+              <button onClick={onLocked} className="mt-3 w-full rounded-xl bg-primary text-primary-foreground text-sm py-2 hover:brightness-110">
+                Try in your project
+              </button>
+            </Panel>
+          </>
+        )}
+        {tab === "preview" && <LivePreview draft={draft} onOpenSection={onOpenSection} />}
+        {tab === "validator" && <ValidatorPanel checks={checks} draft={draft} />}
       </div>
     </aside>
   );
@@ -253,7 +280,136 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: React.Com
   );
 }
 
-function SectionRenderer({ active, onLocked, completed, onToggle }: { active: SectionKey; onLocked: () => void; completed: Set<SectionKey>; onToggle: (k: SectionKey) => void }) {
+// ---------- Live Preview ----------
+
+function LivePreview({ draft, onOpenSection }: { draft: PaperDraft; onOpenSection: (k: SectionKey) => void }) {
+  const { words, pages } = estimateBodyPages(draft);
+  const sectionSummaries: { k: SectionKey; label: string; count: number }[] = [
+    { k: "introduction", label: "1.0 Introduction", count: draft.introduction.length },
+    { k: "literature", label: "2.0 Literature Review", count: draft.literature.length },
+    { k: "methodology", label: "3.0 Methodology", count: draft.methodology.length },
+    { k: "results", label: "4.0 Results", count: draft.results.length },
+    { k: "discussion", label: "5.0 Discussion", count: draft.discussion.length },
+    { k: "conclusion", label: "6.0 Conclusion", count: draft.conclusion.length },
+    { k: "appendices", label: "7.0 Appendices", count: draft.appendices.length },
+    { k: "references", label: "References", count: draft.references.length },
+  ];
+
+  return (
+    <>
+      <Panel title="Cover page preview" icon={Eye}>
+        <div className="rounded-lg border bg-white p-3 text-[9px] leading-tight text-black" style={{ fontFamily: '"Times New Roman", serif' }}>
+          <div className="text-center font-bold uppercase">{demoProject.institution}</div>
+          <div className="text-center">{demoProject.faculty}</div>
+          <div className="text-center">{demoProject.department}</div>
+          <div className="text-center mt-3 font-bold">TOPIC</div>
+          <div className="text-center font-bold">{draft.topic || "Untitled topic"}</div>
+          <div className="text-center mt-3">SUBMITTED BY: {demoProject.groupName}</div>
+          <table className="mt-1.5 w-full border-collapse text-[8px]">
+            <thead>
+              <tr>
+                {["S/N", "SURNAME", "OTHER NAME", "MATRIC", "ROLE"].map((h) => (
+                  <th key={h} className="border border-black px-0.5 py-0.5 text-left font-bold">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {demoProject.members.map((m) => (
+                <tr key={m.matric}>
+                  <td className="border border-black px-0.5 py-0.5">{m.sn}</td>
+                  <td className="border border-black px-0.5 py-0.5">{m.surname}</td>
+                  <td className="border border-black px-0.5 py-0.5">{m.otherName}</td>
+                  <td className="border border-black px-0.5 py-0.5">{m.matric}</td>
+                  <td className="border border-black px-0.5 py-0.5">{m.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="text-center mt-2 italic">{draft.submissionLine}</div>
+          <div className="text-center mt-1 font-semibold">{demoProject.date}</div>
+        </div>
+      </Panel>
+      <Panel title="Document outline" icon={ListOrdered}>
+        <ul className="space-y-1.5 text-xs">
+          {sectionSummaries.map((s) => (
+            <li key={s.k}>
+              <button
+                onClick={() => onOpenSection(s.k)}
+                className="w-full flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted text-left"
+              >
+                <span className="font-medium">{s.label}</span>
+                <span className="text-muted-foreground tabular-nums">{s.count} ¶</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+      <Panel title="Length" icon={BarChart3}>
+        <div className="text-xs text-muted-foreground">
+          Body: ≈ <span className="font-semibold text-foreground">{words}</span> words · projected{" "}
+          <span className={`font-semibold ${pages > PAGE_LIMIT ? "text-destructive" : "text-foreground"}`}>{pages}</span> / {PAGE_LIMIT} pages.
+        </div>
+        <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full transition-all ${pages > PAGE_LIMIT ? "bg-destructive" : "bg-gradient-to-r from-primary to-primary-glow"}`}
+            style={{ width: `${Math.min(100, (pages / PAGE_LIMIT) * 100)}%` }}
+          />
+        </div>
+      </Panel>
+    </>
+  );
+}
+
+// ---------- Validator ----------
+
+function statusChip(status: Check["status"]) {
+  if (status === "pass") return { Icon: CheckCircle2, cls: "text-primary", bg: "bg-primary-soft" };
+  if (status === "warn") return { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50" };
+  return { Icon: XCircle, cls: "text-destructive", bg: "bg-destructive/10" };
+}
+
+function ValidatorPanel({ checks, draft }: { checks: Check[]; draft: PaperDraft }) {
+  const failing = checks.filter((c) => c.status !== "pass").length;
+  const { words, pages } = estimateBodyPages(draft);
+  return (
+    <>
+      <Panel title={failing === 0 ? "All checks passing" : `${failing} check${failing === 1 ? "" : "s"} need attention`} icon={ShieldCheck}>
+        <p className="text-xs text-muted-foreground">
+          Runs against your lecturer&apos;s template: Times New Roman 12, 1-inch margins, {PAGE_LIMIT}-page body
+          limit (cover &amp; references excluded).
+        </p>
+        <div className="mt-2 text-[11px] text-muted-foreground">
+          Current body: ≈ {words} words · projected {pages} / {PAGE_LIMIT} pages.
+        </div>
+      </Panel>
+      <div className="space-y-2">
+        {checks.map((c) => {
+          const { Icon, cls, bg } = statusChip(c.status);
+          return (
+            <div key={c.id} className={`rounded-xl border p-3 ${bg}`}>
+              <div className="flex items-start gap-2 text-sm">
+                <Icon className={`h-4 w-4 mt-0.5 ${cls}`} />
+                <div className="flex-1">
+                  <div className="font-medium">{c.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{c.detail}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ---------- Section Renderer ----------
+
+type PaperCtx = ReturnType<typeof usePaperDraft>;
+
+function SectionRenderer({ active, onLocked, completed, onToggle, paper, checks, goToValidator }: {
+  active: SectionKey; onLocked: () => void; completed: Set<SectionKey>; onToggle: (k: SectionKey) => void;
+  paper: PaperCtx; checks: Check[]; goToValidator: () => void;
+}) {
   const withTracker = (node: React.ReactNode) => (
     <div className="space-y-4">
       {active !== "export" && <SectionStatusBar sectionKey={active} completed={completed.has(active)} onToggle={() => onToggle(active)} />}
@@ -264,16 +420,17 @@ function SectionRenderer({ active, onLocked, completed, onToggle }: { active: Se
     case "project": return withTracker(<ProjectInfo />);
     case "guide": return withTracker(<LecturerGuide />);
     case "analysis": return withTracker(<AIAnalysis />);
-    case "cover": return withTracker(<CoverPage />);
+    case "cover": return withTracker(<CoverPage paper={paper} />);
     case "outline": return withTracker(<Outline />);
-    case "introduction": return withTracker(<DocSection title="1.0 Introduction" paragraphs={sections.introduction} />);
-    case "literature": return withTracker(<DocSection title="2.0 Literature Review" paragraphs={sections.literature} />);
-    case "methodology": return withTracker(<DocSection title="3.0 Methodology" paragraphs={sections.methodology} />);
-    case "results": return withTracker(<DocSection title={`4.0 Results\n4.1 ${demoProject.resultsSubtopic}`} paragraphs={sections.results} />);
-    case "discussion": return withTracker(<DocSection title={`5.0 Discussion\n5.1 ${demoProject.discussionSubtopic}`} paragraphs={sections.discussion} />);
-    case "conclusion": return withTracker(<DocSection title="6.0 Conclusion" paragraphs={sections.conclusion} />);
-    case "references": return withTracker(<References />);
-    case "export": return <ExportView onLocked={onLocked} />;
+    case "introduction": return withTracker(<EditableSection title="1.0 Introduction" sectionKey="introduction" paper={paper} />);
+    case "literature": return withTracker(<EditableSection title="2.0 Literature Review" sectionKey="literature" paper={paper} />);
+    case "methodology": return withTracker(<EditableSection title="3.0 Methodology" sectionKey="methodology" paper={paper} />);
+    case "results": return withTracker(<EditableSection title={`4.0 Results — 4.1 ${demoProject.resultsSubtopic}`} sectionKey="results" paper={paper} />);
+    case "discussion": return withTracker(<EditableSection title={`5.0 Discussion — 5.1 ${demoProject.discussionSubtopic}`} sectionKey="discussion" paper={paper} />);
+    case "conclusion": return withTracker(<EditableSection title="6.0 Conclusion" sectionKey="conclusion" paper={paper} />);
+    case "appendices": return withTracker(<EditableSection title="7.0 Appendices" sectionKey="appendices" paper={paper} />);
+    case "references": return withTracker(<EditableSection title="References" sectionKey="references" paper={paper} hangingIndent />);
+    case "export": return <ExportView onLocked={onLocked} draft={paper.draft} checks={checks} goToValidator={goToValidator} />;
   }
 }
 
@@ -298,6 +455,68 @@ function SectionStatusBar({ sectionKey, completed, onToggle }: { sectionKey: Sec
     </div>
   );
 }
+
+// ---------- Editable primitives ----------
+
+function AutoTextarea({ value, onChange, placeholder, style, className }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; style?: React.CSSProperties; className?: string;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`w-full resize-none bg-transparent outline-none focus:ring-2 focus:ring-primary/30 rounded-md px-2 py-1 ${className ?? ""}`}
+      style={{ fieldSizing: "content", minHeight: "1.75rem", ...style } as React.CSSProperties}
+      rows={1}
+    />
+  );
+}
+
+function EditableSection({ title, sectionKey, paper, hangingIndent }: {
+  title: string; sectionKey: ArrayKey; paper: PaperCtx; hangingIndent?: boolean;
+}) {
+  const items = paper.draft[sectionKey];
+  return (
+    <PageWrap eyebrow="Document" title={title} description="Click any paragraph to edit. Changes are saved locally and appear in the live preview and exports.">
+      <div className="doc-page">
+        <div className="font-bold uppercase" style={{ fontSize: "13pt" }}>{title.split("—")[0].trim()}</div>
+        <div className="mt-4 space-y-3 text-justify">
+          {items.map((p, i) => (
+            <div key={i} className="group relative">
+              <AutoTextarea
+                value={p}
+                onChange={(v) => paper.updateParagraph(sectionKey, i, v)}
+                placeholder="Write here..."
+                style={hangingIndent
+                  ? { paddingLeft: "0.5in", textIndent: "-0.5in", fontSize: "12pt", lineHeight: 1.6 }
+                  : { textIndent: "0.5in", fontSize: "12pt", lineHeight: 1.6 }}
+                className="hover:bg-primary-soft/30 focus:bg-primary-soft/40"
+              />
+              {items.length > 1 && (
+                <button
+                  onClick={() => paper.removeParagraph(sectionKey, i)}
+                  className="absolute -right-2 top-1 opacity-0 group-hover:opacity-100 p-1 rounded-md bg-background border text-muted-foreground hover:text-destructive transition"
+                  aria-label="Remove paragraph"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => paper.addParagraph(sectionKey)}
+          className="mt-4 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+        >
+          <Plus className="h-3.5 w-3.5" /> Add paragraph
+        </button>
+      </div>
+    </PageWrap>
+  );
+}
+
+// ---------- Static setup views ----------
 
 function ProjectInfo() {
   const rows = [
@@ -385,16 +604,23 @@ function AIAnalysis() {
   );
 }
 
-function CoverPage() {
+function CoverPage({ paper }: { paper: PaperCtx }) {
   return (
-    <PageWrap eyebrow="Document" title="Cover page" description="Preview matches the exported Word document.">
+    <PageWrap eyebrow="Document" title="Cover page" description="Topic and terms of reference are editable. Members table is set from Project Information.">
       <div className="doc-page">
         <div className="text-center uppercase font-bold" style={{ fontSize: "14pt" }}>{demoProject.institution}</div>
         <div className="text-center mt-1" style={{ fontSize: "12pt" }}>{demoProject.faculty}</div>
         <div className="text-center" style={{ fontSize: "12pt" }}>{demoProject.department}</div>
 
         <div className="text-center mt-16 font-bold uppercase" style={{ fontSize: "13pt" }}>Topic</div>
-        <div className="text-center mt-2 font-bold" style={{ fontSize: "13pt" }}>{demoProject.topic}</div>
+        <div className="mx-auto mt-2 max-w-[90%]">
+          <AutoTextarea
+            value={paper.draft.topic}
+            onChange={(v) => paper.updateField("topic", v)}
+            className="text-center font-bold hover:bg-primary-soft/30 focus:bg-primary-soft/40"
+            style={{ fontSize: "13pt", lineHeight: 1.4 }}
+          />
+        </div>
 
         <div className="text-center mt-14" style={{ fontSize: "12pt" }}>
           <div>Course Code: <span className="font-semibold">{demoProject.courseCode}</span></div>
@@ -429,8 +655,13 @@ function CoverPage() {
           <div className="mt-6 text-center font-bold" style={{ fontSize: "12pt" }}>TERMS OF REFERENCE</div>
         </div>
 
-        <div className="text-center mt-14 italic" style={{ fontSize: "12pt" }}>
-          {demoProject.submissionLine}
+        <div className="mx-auto mt-4 max-w-[90%]">
+          <AutoTextarea
+            value={paper.draft.submissionLine}
+            onChange={(v) => paper.updateField("submissionLine", v)}
+            className="text-center italic hover:bg-primary-soft/30 focus:bg-primary-soft/40"
+            style={{ fontSize: "12pt", lineHeight: 1.6 }}
+          />
         </div>
         <div className="text-center mt-8 font-semibold" style={{ fontSize: "12pt" }}>{demoProject.date}</div>
       </div>
@@ -444,7 +675,7 @@ function Outline() {
       <div className="doc-page">
         <div className="font-bold text-center" style={{ fontSize: "13pt" }}>TABLE OF CONTENTS</div>
         <div className="mt-6 space-y-2" style={{ fontSize: "12pt" }}>
-          {sections.outline.map((o, i) => (
+          {staticSections.outline.map((o, i) => (
             <div key={`${o.n}-${i}`} className="flex justify-between border-b border-dotted border-neutral-400 pb-1">
               <span>{o.n ? <><span className="font-semibold mr-3">{o.n}</span>{o.t}</> : <span className="font-bold">{o.t}</span>}</span>
               <span className="text-neutral-500">—</span>
@@ -456,44 +687,25 @@ function Outline() {
   );
 }
 
-function DocSection({ title, paragraphs }: { title: string; paragraphs: string[] }) {
-  const lines = title.split("\n");
-  return (
-    <PageWrap eyebrow="Document" title={lines[0]}>
-      <div className="doc-page">
-        {lines.map((l, i) => (
-          <div key={i} className={i === 0 ? "font-bold" : "font-semibold mt-4"} style={{ fontSize: i === 0 ? "13pt" : "12pt" }}>{l}</div>
-        ))}
-        <div className="mt-4 space-y-3 text-justify">
-          {paragraphs.map((p, i) => <p key={i} style={{ textIndent: "0.5in" }}>{p}</p>)}
-        </div>
-      </div>
-    </PageWrap>
-  );
-}
+// ---------- Export ----------
 
-function References() {
-  return (
-    <PageWrap eyebrow="Document" title="7.0 References">
-      <div className="doc-page">
-        <div className="font-bold" style={{ fontSize: "13pt" }}>REFERENCES</div>
-        <ul className="mt-4 space-y-3" style={{ fontSize: "12pt" }}>
-          {sections.references.map((r, i) => (
-            <li key={i} className="pl-8 -indent-8">{r}</li>
-          ))}
-        </ul>
-      </div>
-    </PageWrap>
-  );
-}
-
-function ExportView({ onLocked }: { onLocked: () => void }) {
+function ExportView({ onLocked, draft, checks, goToValidator }: {
+  onLocked: () => void; draft: PaperDraft; checks: Check[]; goToValidator: () => void;
+}) {
   const [busy, setBusy] = useState<null | "docx" | "pdf">(null);
+  const failing = checks.filter((c) => c.status === "fail");
+  const warning = checks.filter((c) => c.status === "warn");
+  const canExport = failing.length === 0;
 
   const handleDownload = async (kind: "docx" | "pdf") => {
+    if (!canExport) { goToValidator(); return; }
     setBusy(kind);
     try {
-      const res = await fetch(`/api/export/${kind}`);
+      const res = await fetch(`/api/export/${kind}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(draft),
+      });
       if (!res.ok) throw new Error(`Export failed (${res.status})`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -519,13 +731,31 @@ function ExportView({ onLocked }: { onLocked: () => void }) {
 
   return (
     <PageWrap eyebrow="Finish" title="Export your paper">
-      <div className="rounded-2xl border border-primary/30 bg-primary-soft/40 p-4 text-sm flex items-start gap-3 mb-5">
-        <Sparkles className="h-5 w-5 text-primary mt-0.5" />
-        <div>
-          <div className="font-medium">Demo export enabled</div>
-          <p className="text-muted-foreground mt-0.5">Try the real export using this demo project — the file follows the exact GNS 102 template.</p>
+      {/* Pre-export validator summary */}
+      <div className={`rounded-2xl border p-4 mb-5 ${canExport ? "border-primary/30 bg-primary-soft/40" : "border-destructive/40 bg-destructive/5"}`}>
+        <div className="flex items-start gap-3">
+          {canExport ? <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" /> : <XCircle className="h-5 w-5 text-destructive mt-0.5" />}
+          <div className="flex-1 text-sm">
+            <div className="font-medium">
+              {canExport
+                ? warning.length ? `Ready to export — ${warning.length} soft warning${warning.length === 1 ? "" : "s"}` : "All template checks passed — ready to export"
+                : `${failing.length} check${failing.length === 1 ? "" : "s"} must be fixed before export`}
+            </div>
+            <ul className="mt-2 space-y-1 text-xs">
+              {checks.map((c) => {
+                const { Icon, cls } = statusChip(c.status);
+                return (
+                  <li key={c.id} className="flex items-start gap-2">
+                    <Icon className={`h-3.5 w-3.5 mt-0.5 ${cls}`} />
+                    <span><span className="font-medium text-foreground">{c.label}</span> — <span className="text-muted-foreground">{c.detail}</span></span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         {cards.map((c) => (
           <div key={c.kind} className="rounded-2xl border bg-card p-6">
@@ -534,11 +764,11 @@ function ExportView({ onLocked }: { onLocked: () => void }) {
             <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
             <button
               onClick={() => handleDownload(c.kind)}
-              disabled={busy !== null}
+              disabled={busy !== null || !canExport}
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110 disabled:opacity-60"
             >
               {busy === c.kind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              {busy === c.kind ? "Preparing..." : "Download"}
+              {busy === c.kind ? "Preparing..." : canExport ? "Download" : "Fix checks first"}
             </button>
           </div>
         ))}
