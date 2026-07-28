@@ -43,13 +43,24 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/login" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Log in</Link>
-          <Link
-            to="/register"
-            className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-soft)] hover:brightness-110 transition"
-          >
-            Get started
-          </Link>
+          {user ? (
+            <>
+              <Link to="/dashboard" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Dashboard</Link>
+              <button onClick={handleSignOut} className="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm hover:bg-primary-soft">
+                <LogOut className="h-3.5 w-3.5" /> Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Log in</Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-soft)] hover:brightness-110 transition"
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
         <button
           className="md:hidden p-2 rounded-lg hover:bg-primary-soft"
