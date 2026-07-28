@@ -1,4 +1,4 @@
-import { demoProject } from "./demo-content";
+import { demoProject, sections as staticSections } from "./demo-content";
 import { defaultDraft, type PaperDraft } from "./paper-draft";
 
 const TIMES = "Times New Roman";
@@ -10,7 +10,7 @@ function resolve(input?: Partial<PaperDraft>): PaperDraft {
 }
 
 export async function buildDocx(input?: Partial<PaperDraft>): Promise<Uint8Array> {
-  const sections = resolve(input);
+  const d = resolve(input);
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     AlignmentType, PageBreak, WidthType, BorderStyle,
