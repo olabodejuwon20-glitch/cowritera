@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
-import { GraduationCap, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { GraduationCap, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useSession, signOut } from "@/lib/auth";
 
 const nav = [
   { to: "/", label: "Home" },
