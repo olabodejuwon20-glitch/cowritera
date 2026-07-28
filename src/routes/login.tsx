@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Loader2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -15,6 +17,22 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    navigate({ to: "/dashboard" });
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -28,11 +46,20 @@ function LoginPage() {
           </div>
           <h1 className="mt-6 text-2xl font-semibold">Log in to Co-Research AI</h1>
           <p className="mt-1 text-sm text-muted-foreground">Continue where you left off on your term paper.</p>
-          <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <Field label="Email" type="email" placeholder="you@university.edu.ng" />
-            <Field label="Password" type="password" placeholder="••••••••" />
-            <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 font-medium hover:brightness-110">
-              Log in
+          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.edu.ng" />
+            <Field label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            {err && (
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4 mt-0.5" /> {err}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground py-2.5 font-medium hover:brightness-110 disabled:opacity-60"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Log in
             </button>
           </form>
           <div className="mt-6 text-sm text-muted-foreground text-center">

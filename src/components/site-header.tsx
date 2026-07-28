@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
-import { GraduationCap, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { GraduationCap, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useSession, signOut } from "@/lib/auth";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -11,6 +12,12 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { user } = useSession();
+  const navigate = useNavigate();
+  async function handleSignOut() {
+    await signOut();
+    navigate({ to: "/" });
+  }
   return (
     <header className="sticky top-0 z-40 w-full glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -36,13 +43,24 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/login" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Log in</Link>
-          <Link
-            to="/register"
-            className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-soft)] hover:brightness-110 transition"
-          >
-            Get started
-          </Link>
+          {user ? (
+            <>
+              <Link to="/dashboard" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Dashboard</Link>
+              <button onClick={handleSignOut} className="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm hover:bg-primary-soft">
+                <LogOut className="h-3.5 w-3.5" /> Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Log in</Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-soft)] hover:brightness-110 transition"
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
         <button
           className="md:hidden p-2 rounded-lg hover:bg-primary-soft"
@@ -61,8 +79,17 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-2 flex gap-2">
-              <Link to="/login" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Log in</Link>
-              <Link to="/register" className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground" onClick={() => setOpen(false)}>Get started</Link>
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Dashboard</Link>
+                  <button onClick={() => { setOpen(false); void handleSignOut(); }} className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="flex-1 text-center px-3 py-2 rounded-lg border" onClick={() => setOpen(false)}>Log in</Link>
+                  <Link to="/register" className="flex-1 text-center px-3 py-2 rounded-lg bg-primary text-primary-foreground" onClick={() => setOpen(false)}>Get started</Link>
+                </>
+              )}
             </div>
           </div>
         </div>
