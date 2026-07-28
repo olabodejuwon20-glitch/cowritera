@@ -157,7 +157,8 @@ export async function buildDocx(input?: Partial<PaperDraft>): Promise<Uint8Array
   return new Uint8Array(buffer);
 }
 
-export async function buildPdf(): Promise<Uint8Array> {
+export async function buildPdf(input?: Partial<PaperDraft>): Promise<Uint8Array> {
+  const d = resolve(input);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.TimesRoman);
