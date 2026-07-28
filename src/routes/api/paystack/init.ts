@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/paystack/init")({
             amount: amountKobo,
             currency: "NGN",
             callback_url,
-            metadata: { product: "Co-Research AI Project Pass" },
+            metadata: { product: "Co-Research AI Project Pass", paper_id: body.paper_id },
           }),
         });
         const data = (await res.json()) as {
