@@ -1,10 +1,16 @@
-import { demoProject, sections } from "./demo-content";
+import { demoProject } from "./demo-content";
+import { defaultDraft, type PaperDraft } from "./paper-draft";
 
 const TIMES = "Times New Roman";
 const SIZE = 24; // 12pt half-points
 const TITLE = 26;
 
-export async function buildDocx(): Promise<Uint8Array> {
+function resolve(input?: Partial<PaperDraft>): PaperDraft {
+  return { ...defaultDraft(), ...(input ?? {}) };
+}
+
+export async function buildDocx(input?: Partial<PaperDraft>): Promise<Uint8Array> {
+  const sections = resolve(input);
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     AlignmentType, PageBreak, WidthType, BorderStyle,
