@@ -80,11 +80,11 @@ export const updateSection = createServerFn({ method: "POST" })
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
     if (!row) throw new Error("Paper not found");
-    const sections = { ...((row.sections as Record<string, unknown>) ?? {}) };
+    const sections = { ...((row.sections as Record<string, string>) ?? {}) };
     sections[data.section_key] = data.content;
     const { error } = await supabase
       .from("papers")
-      .update({ sections })
+      .update({ sections: sections as never })
       .eq("id", data.id)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);

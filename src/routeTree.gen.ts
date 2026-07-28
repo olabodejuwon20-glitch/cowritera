@@ -14,10 +14,14 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedNewRouteImport } from './routes/_authenticated/new'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiPaystackInitRouteImport } from './routes/api/paystack/init'
 import { Route as ApiExportPdfRouteImport } from './routes/api/export/pdf'
 import { Route as ApiExportDocxRouteImport } from './routes/api/export/docx'
+import { Route as AuthenticatedPaperIdRouteImport } from './routes/_authenticated/paper.$id'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -44,10 +48,24 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedNewRoute = AuthenticatedNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPaystackInitRoute = ApiPaystackInitRouteImport.update({
   id: '/api/paystack/init',
@@ -64,6 +82,11 @@ const ApiExportDocxRoute = ApiExportDocxRouteImport.update({
   path: '/api/export/docx',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPaperIdRoute = AuthenticatedPaperIdRouteImport.update({
+  id: '/paper/$id',
+  path: '/paper/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,6 +95,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/new': typeof AuthenticatedNewRoute
+  '/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
   '/api/paystack/init': typeof ApiPaystackInitRoute
@@ -83,6 +109,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/new': typeof AuthenticatedNewRoute
+  '/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
   '/api/paystack/init': typeof ApiPaystackInitRoute
@@ -90,11 +119,15 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/new': typeof AuthenticatedNewRoute
+  '/_authenticated/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
   '/api/paystack/init': typeof ApiPaystackInitRoute
@@ -108,6 +141,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/register'
+    | '/dashboard'
+    | '/new'
+    | '/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
     | '/api/paystack/init'
@@ -119,17 +155,24 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/register'
+    | '/dashboard'
+    | '/new'
+    | '/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
     | '/api/paystack/init'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/demo'
     | '/faq'
     | '/login'
     | '/pricing'
     | '/register'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/new'
+    | '/_authenticated/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
     | '/api/paystack/init'
@@ -137,6 +180,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   DemoRoute: typeof DemoRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -184,12 +228,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/new': {
+      id: '/_authenticated/new'
+      path: '/new'
+      fullPath: '/new'
+      preLoaderRoute: typeof AuthenticatedNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/paystack/init': {
       id: '/api/paystack/init'
@@ -212,11 +277,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiExportDocxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/paper/$id': {
+      id: '/_authenticated/paper/$id'
+      path: '/paper/$id'
+      fullPath: '/paper/$id'
+      preLoaderRoute: typeof AuthenticatedPaperIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedNewRoute: typeof AuthenticatedNewRoute
+  AuthenticatedPaperIdRoute: typeof AuthenticatedPaperIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedNewRoute: AuthenticatedNewRoute,
+  AuthenticatedPaperIdRoute: AuthenticatedPaperIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   DemoRoute: DemoRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
