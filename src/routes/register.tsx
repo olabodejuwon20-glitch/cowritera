@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Loader2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -15,6 +17,36 @@ export const Route = createFileRoute("/register")({
 });
 
 function RegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    setMsg(null);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { full_name: name },
+      },
+    });
+    setBusy(false);
+    if (error) return setErr(error.message);
+    if (data.session) {
+      navigate({ to: "/dashboard" });
+    } else {
+      setMsg("Check your email to confirm your account, then log in.");
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -28,12 +60,24 @@ function RegisterPage() {
           </div>
           <h1 className="mt-6 text-2xl font-semibold">Create your account</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign up to purchase your Project Pass and start writing.</p>
-          <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <Field label="Full name" placeholder="Chinedu Okoro" />
-            <Field label="Email" type="email" placeholder="you@university.edu.ng" />
-            <Field label="Password" type="password" placeholder="At least 8 characters" />
-            <button type="submit" className="w-full rounded-xl bg-primary text-primary-foreground py-2.5 font-medium hover:brightness-110">
-              Create account
+          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <Field label="Full name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Chinedu Okoro" />
+            <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.edu.ng" />
+            <Field label="Password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+            {err && (
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4 mt-0.5" /> {err}
+              </div>
+            )}
+            {msg && (
+              <div className="rounded-xl border border-primary/30 bg-primary-soft p-3 text-sm text-primary">{msg}</div>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground py-2.5 font-medium hover:brightness-110 disabled:opacity-60"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create account
             </button>
           </form>
           <div className="mt-6 text-sm text-muted-foreground text-center">
