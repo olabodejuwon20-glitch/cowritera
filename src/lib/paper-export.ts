@@ -1,10 +1,16 @@
-import { demoProject, sections } from "./demo-content";
+import { demoProject, sections as staticSections } from "./demo-content";
+import { defaultDraft, type PaperDraft } from "./paper-draft";
 
 const TIMES = "Times New Roman";
 const SIZE = 24; // 12pt half-points
 const TITLE = 26;
 
-export async function buildDocx(): Promise<Uint8Array> {
+function resolve(input?: Partial<PaperDraft>): PaperDraft {
+  return { ...defaultDraft(), ...(input ?? {}) };
+}
+
+export async function buildDocx(input?: Partial<PaperDraft>): Promise<Uint8Array> {
+  const d = resolve(input);
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     AlignmentType, PageBreak, WidthType, BorderStyle,
@@ -64,14 +70,14 @@ export async function buildDocx(): Promise<Uint8Array> {
     new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
     p("A TERM PAPER REPORT", { bold: true, align: AlignmentType.CENTER, size: TITLE }),
     p("ON", { align: AlignmentType.CENTER }),
-    p(demoProject.topic.toUpperCase(), { bold: true, align: AlignmentType.CENTER, size: TITLE }),
+    p(d.topic.toUpperCase(), { bold: true, align: AlignmentType.CENTER, size: TITLE }),
     new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
     p(`SUBMITTED BY: ${demoProject.groupName}`, { bold: true, align: AlignmentType.CENTER }),
     new Paragraph({ children: [new TextRun("")], spacing: { after: 200 } }),
     membersTable,
     new Paragraph({ children: [new TextRun("")], spacing: { after: 300 } }),
     p("TERMS OF REFERENCE", { bold: true, align: AlignmentType.CENTER }),
-    p(demoProject.submissionLine, { align: AlignmentType.CENTER, italics: true }),
+    p(d.submissionLine, { align: AlignmentType.CENTER, italics: true }),
     p(demoProject.date, { bold: true, align: AlignmentType.CENTER }),
     new Paragraph({ children: [new PageBreak()] }),
   ];
@@ -80,7 +86,7 @@ export async function buildDocx(): Promise<Uint8Array> {
   const outline: any[] = [
     p("OUTLINE", { bold: true, align: AlignmentType.CENTER, size: TITLE }),
     new Paragraph({ children: [new TextRun("")], spacing: { after: 120 } }),
-    ...sections.outline.map((o) =>
+    ...staticSections.outline.map((o) =>
       new Paragraph({
         spacing: { after: 80, line: 320 },
         children: [new TextRun({ text: `${o.n ? o.n + " " : ""}${o.t}`, bold: !o.n, font: TIMES, size: SIZE })],
@@ -93,7 +99,7 @@ export async function buildDocx(): Promise<Uint8Array> {
 
   // 1.0 Introduction (with inline 1.1 Aim subheading)
   body.push(heading("1.0 INTRODUCTION"));
-  for (const para of sections.introduction) {
+  for (const para of d.introduction) {
     if (para === "1.1 AIM OF THE STUDY") {
       body.push(subheading("1.1 AIM OF THE STUDY"));
     } else {
@@ -102,29 +108,29 @@ export async function buildDocx(): Promise<Uint8Array> {
   }
 
   body.push(heading("2.0 LITERATURE REVIEW"));
-  sections.literature.forEach((para) => body.push(p(para, { indent: true })));
+  d.literature.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(heading("3.0 METHODOLOGY"));
-  sections.methodology.forEach((para) => body.push(p(para, { indent: true })));
+  d.methodology.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(heading("4.0 RESULTS"));
   body.push(subheading(`4.1 ${demoProject.resultsSubtopic}`));
-  sections.results.forEach((para) => body.push(p(para, { indent: true })));
+  d.results.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(heading("5.0 DISCUSSION"));
   body.push(subheading(`5.1 ${demoProject.discussionSubtopic}`));
-  sections.discussion.forEach((para) => body.push(p(para, { indent: true })));
+  d.discussion.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(heading("6.0 CONCLUSION"));
-  sections.conclusion.forEach((para) => body.push(p(para, { indent: true })));
+  d.conclusion.forEach((para) => body.push(p(para, { indent: true })));
 
   body.push(new Paragraph({ children: [new PageBreak()] }));
   body.push(heading("7.0 APPENDICES"));
-  sections.appendices.forEach((para) => body.push(p(para)));
+  d.appendices.forEach((para) => body.push(p(para)));
 
   body.push(new Paragraph({ children: [new PageBreak()] }));
   body.push(heading("REFERENCES"));
-  sections.references.forEach((r) =>
+  d.references.forEach((r) =>
     body.push(
       new Paragraph({
         spacing: { after: 160, line: 360 },
@@ -151,7 +157,8 @@ export async function buildDocx(): Promise<Uint8Array> {
   return new Uint8Array(buffer);
 }
 
-export async function buildPdf(): Promise<Uint8Array> {
+export async function buildPdf(input?: Partial<PaperDraft>): Promise<Uint8Array> {
+  const d = resolve(input);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.TimesRoman);
@@ -236,7 +243,7 @@ export async function buildPdf(): Promise<Uint8Array> {
   y -= 24;
   drawLine("A TERM PAPER REPORT", { font: bold, size: 13, align: "center" });
   drawLine("ON", { align: "center" });
-  for (const line of wrap(demoProject.topic.toUpperCase(), bold, 13)) drawLine(line, { font: bold, size: 13, align: "center" });
+  for (const line of wrap(d.topic.toUpperCase(), bold, 13)) drawLine(line, { font: bold, size: 13, align: "center" });
   y -= 18;
   drawLine(`SUBMITTED BY: ${demoProject.groupName}`, { font: bold, align: "center" });
   y -= 12;
@@ -267,7 +274,7 @@ export async function buildPdf(): Promise<Uint8Array> {
   y -= 20;
   drawLine("TERMS OF REFERENCE", { font: bold, align: "center" });
   y -= 4;
-  drawWrapped(demoProject.submissionLine, { font: italic, align: "center" });
+  drawWrapped(d.submissionLine, { font: italic, align: "center" });
   y -= 8;
   drawLine(demoProject.date, { font: bold, align: "center" });
 
@@ -275,7 +282,7 @@ export async function buildPdf(): Promise<Uint8Array> {
   newPage();
   drawLine("OUTLINE", { font: bold, size: 13, align: "center" });
   y -= 10;
-  for (const o of sections.outline) {
+  for (const o of staticSections.outline) {
     const text = `${o.n ? o.n + "   " : ""}${o.t}`;
     drawLine(text, { font: o.n ? font : bold });
   }
@@ -283,30 +290,30 @@ export async function buildPdf(): Promise<Uint8Array> {
   // ---------- BODY ----------
   newPage();
   heading("1.0 INTRODUCTION");
-  for (const para of sections.introduction) {
+  for (const para of d.introduction) {
     if (para === "1.1 AIM OF THE STUDY") subheading("1.1 AIM OF THE STUDY");
     else drawWrapped(para, { indent: true });
   }
   heading("2.0 LITERATURE REVIEW");
-  for (const para of sections.literature) drawWrapped(para, { indent: true });
+  for (const para of d.literature) drawWrapped(para, { indent: true });
   heading("3.0 METHODOLOGY");
-  for (const para of sections.methodology) drawWrapped(para, { indent: true });
+  for (const para of d.methodology) drawWrapped(para, { indent: true });
   heading("4.0 RESULTS");
   subheading(`4.1 ${demoProject.resultsSubtopic}`);
-  for (const para of sections.results) drawWrapped(para, { indent: true });
+  for (const para of d.results) drawWrapped(para, { indent: true });
   heading("5.0 DISCUSSION");
   subheading(`5.1 ${demoProject.discussionSubtopic}`);
-  for (const para of sections.discussion) drawWrapped(para, { indent: true });
+  for (const para of d.discussion) drawWrapped(para, { indent: true });
   heading("6.0 CONCLUSION");
-  for (const para of sections.conclusion) drawWrapped(para, { indent: true });
+  for (const para of d.conclusion) drawWrapped(para, { indent: true });
 
   newPage();
   heading("7.0 APPENDICES");
-  for (const para of sections.appendices) drawWrapped(para);
+  for (const para of d.appendices) drawWrapped(para);
 
   newPage();
   heading("REFERENCES");
-  for (const r of sections.references) {
+  for (const r of d.references) {
     const lines = wrap(r, font, size, contentW - 36);
     lines.forEach((l, i) => drawLine(l, { indent: i === 0 ? 0 : 36 }));
     y -= 4;
