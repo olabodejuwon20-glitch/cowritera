@@ -68,7 +68,7 @@ function AdminLayout() {
               return (
                 <Link
                   key={n.to}
-                  to={n.to}
+                  to={n.to as any}
                   className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm whitespace-nowrap ${
                     active ? "bg-primary text-primary-foreground" : "hover:bg-primary-soft text-foreground/80"
                   }`}
