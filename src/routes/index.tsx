@@ -10,8 +10,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
       { name: "description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
-      { property: "og:title", content: "Co-Research AI — Academic writing, done properly" },
-      { property: "og:description", content: "Generate lecturer-compliant term papers with Co-Research AI. One project, unlimited edits, export-ready Word & PDF." },
+      { property: "og:title", content: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
+      { property: "og:description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
