@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { adminCreateCoupon, adminDeleteCoupon, adminListCoupons, adminUpdateCoupon } from "@/lib/coupons.functions";
+import { adminCreateCoupon, adminDeleteCoupon, adminListCoupons, adminListRedemptions, adminUpdateCoupon } from "@/lib/coupons.functions";
 import { useState } from "react";
-import { Loader2, Ticket, Plus, Trash2, Pencil, X } from "lucide-react";
+import { Loader2, Ticket, Plus, Trash2, Pencil, X, History } from "lucide-react";
 import { Tip } from "./index";
 
 export const Route = createFileRoute("/_authenticated/admin/coupons")({
