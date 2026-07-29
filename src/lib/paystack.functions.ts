@@ -6,12 +6,12 @@ import { z } from "zod";
 export const PROJECT_PASS_KOBO = 350_000; // ₦3,500
 
 async function computeExpectedAmountKobo(
-  supabase: any,
   code: string | null | undefined,
 ): Promise<{ amount_kobo: number; coupon_id: string | null }> {
   const base = PROJECT_PASS_KOBO;
   if (!code || !code.trim()) return { amount_kobo: base, coupon_id: null };
-  const { data: coupon, error } = await supabase
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: coupon, error } = await supabaseAdmin
     .from("coupons")
     .select("id, type, discount_percent, discount_amount_kobo, active, expires_at, max_uses, uses")
     .ilike("code", code.trim())
@@ -66,7 +66,7 @@ export const initPayment = createServerFn({ method: "POST" })
     if (!paper) throw new Error("Paper not found");
     if (paper.paid) return { already_paid: true as const };
 
-    const { amount_kobo } = await computeExpectedAmountKobo(supabase, data.coupon_code ?? null);
+    const { amount_kobo } = await computeExpectedAmountKobo(data.coupon_code ?? null);
 
     const callback_url = data.callback_url ?? "";
 
