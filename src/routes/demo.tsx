@@ -4,8 +4,9 @@ import {
   FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
   CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
   Info, X, ChevronLeft, Circle, Loader2, TrendingUp, Eye, Plus, Trash2,
-  AlertTriangle, XCircle,
+  AlertTriangle, XCircle, Menu,
 } from "lucide-react";
+
 import { demoProject, sections as staticSections } from "@/lib/demo-content";
 import {
   usePaperDraft, validateDraft, estimateBodyPages, PAGE_LIMIT,
@@ -78,6 +79,7 @@ function useCompletion() {
 function DemoWorkspace() {
   const [active, setActive] = useState<SectionKey>("cover");
   const [showPurchase, setShowPurchase] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { completed, toggle, reset, markAll } = useCompletion();
   const paper = usePaperDraft();
 
@@ -86,13 +88,35 @@ function DemoWorkspace() {
   const percent = Math.round((done / total) * 100);
   const checks = useMemo(() => validateDraft(paper.draft), [paper.draft]);
 
+  const selectSection = (k: SectionKey) => {
+    setActive(k);
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <TopBar onPurchase={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
+      <TopBar
+        onPurchase={() => setShowPurchase(true)}
+        percent={percent}
+        done={done}
+        total={total}
+        onOpenSections={() => setSidebarOpen(true)}
+      />
       <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr]">
-        <Sidebar active={active} onSelect={setActive} completed={completed} percent={percent} done={done} total={total} onReset={reset} onMarkAll={markAll} />
+        <aside className="border-r bg-background hidden md:block">
+          <SidebarContent
+            active={active}
+            onSelect={selectSection}
+            completed={completed}
+            percent={percent}
+            done={done}
+            total={total}
+            onReset={reset}
+            onMarkAll={markAll}
+          />
+        </aside>
         <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
-          <div className="p-6 md:p-10">
+          <div className="p-4 sm:p-6 md:p-10">
             <SectionRenderer
               active={active}
               onLocked={() => setShowPurchase(true)}
@@ -105,23 +129,46 @@ function DemoWorkspace() {
           </div>
         </main>
       </div>
+      {sidebarOpen && (
+        <MobileSidebar onClose={() => setSidebarOpen(false)}>
+          <SidebarContent
+            active={active}
+            onSelect={selectSection}
+            completed={completed}
+            percent={percent}
+            done={done}
+            total={total}
+            onReset={reset}
+            onMarkAll={markAll}
+          />
+        </MobileSidebar>
+      )}
       {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
     </div>
   );
 }
 
-function TopBar({ onPurchase, percent, done, total }: { onPurchase: () => void; percent: number; done: number; total: number }) {
+function TopBar({ onPurchase, percent, done, total, onOpenSections }: {
+  onPurchase: () => void; percent: number; done: number; total: number; onOpenSections: () => void;
+}) {
   return (
-    <div className="sticky top-0 z-30 h-16 border-b bg-background/80 backdrop-blur flex items-center px-4 md:px-6">
-      <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <div className="sticky top-0 z-30 h-16 border-b bg-background/80 backdrop-blur flex items-center px-3 md:px-6">
+      <button
+        onClick={onOpenSections}
+        className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg border bg-background text-muted-foreground hover:text-foreground"
+        aria-label="Open sections"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+      <Link to="/" className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" /> Back to site
       </Link>
-      <div className="mx-4 h-6 w-px bg-border" />
-      <div className="min-w-0">
+      <div className="mx-3 md:mx-4 h-6 w-px bg-border" />
+      <div className="min-w-0 flex-1">
         <div className="text-xs text-muted-foreground">Demo project</div>
         <div className="text-sm font-medium truncate">{demoProject.topic}</div>
       </div>
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex items-center gap-3 shrink-0">
         <div className="hidden md:flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
           <TrendingUp className="h-3.5 w-3.5 text-primary" />
           <div className="h-1.5 w-28 rounded-full bg-muted overflow-hidden">
@@ -137,14 +184,31 @@ function TopBar({ onPurchase, percent, done, total }: { onPurchase: () => void; 
   );
 }
 
-function Sidebar({ active, onSelect, completed, percent, done, total, onReset, onMarkAll }: {
+function MobileSidebar({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-background border-r shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
+          <div className="text-sm font-semibold">Sections</div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function SidebarContent({ active, onSelect, completed, percent, done, total, onReset, onMarkAll }: {
   active: SectionKey; onSelect: (k: SectionKey) => void;
   completed: Set<SectionKey>; percent: number; done: number; total: number;
   onReset: () => void; onMarkAll: () => void;
 }) {
   const groups = Array.from(new Set(navItems.map((i) => i.group)));
   return (
-    <aside className="border-r bg-background hidden md:block">
+    <>
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
           <div className="text-xs font-medium text-muted-foreground">Project progress</div>
@@ -196,9 +260,10 @@ function Sidebar({ active, onSelect, completed, percent, done, total, onReset, o
           </div>
         ))}
       </nav>
-    </aside>
+    </>
   );
 }
+
 
 type RightTab = "overview" | "preview" | "validator";
 
