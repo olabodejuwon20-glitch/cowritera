@@ -3,7 +3,18 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Long gcTime keeps entries around for the IndexedDB offline cache.
+        gcTime: 1000 * 60 * 60 * 24 * 14,
+        staleTime: 1000 * 30,
+        retry: 1,
+        networkMode: "offlineFirst",
+      },
+    },
+  });
+
 
   const router = createRouter({
     routeTree,

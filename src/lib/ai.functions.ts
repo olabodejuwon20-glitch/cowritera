@@ -6,6 +6,12 @@ const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3.6-flash";
 
 const SECTION_PROMPTS: Record<string, string> = {
+  cover:
+    "Draft the cover page block for this term paper: topic in title case, course code, institution/faculty/department placeholders, group name, and a submission line (\"Submitted in partial fulfilment...\"). Output plain lines, no markdown.",
+  outline:
+    "Produce a numbered chapter outline for this term paper (1.0 Introduction through References), each with 2-4 sub-headings. Output plain numbered lines, no markdown symbols.",
+  ai_analysis:
+    "Analyse the topic and the lecturer's instructions. Return: (a) what the lecturer is really asking for, (b) the compliance rules detected (length, font, citation style, deadline), (c) the recommended chapter structure, and (d) 3 risks that commonly lose marks. Plain prose with short labelled paragraphs.",
   introduction:
     "Write the '1.0 Introduction' section of an undergraduate GNS 102 term paper. Cover background, statement of problem, aims/objectives, scope, and significance. Use formal academic prose with 4–6 clearly separated paragraphs.",
   literature:
@@ -58,7 +64,7 @@ export const generateSection = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: paper, error } = await supabase
       .from("papers")
-      .select("id, topic, course_code, paid")
+      .select("id, topic, course_code, paid, project")
       .eq("id", data.paper_id)
       .eq("user_id", userId)
       .maybeSingle();
@@ -66,10 +72,11 @@ export const generateSection = createServerFn({ method: "POST" })
     if (!paper) throw new Error("Paper not found");
     if (!paper.paid) throw new Error("This project needs a Project Pass before AI generation.");
 
+    const guide = ((paper.project as Record<string, unknown> | null)?.lecturer_guide as string | undefined)?.slice(0, 4000) ?? "";
     const brief = SECTION_PROMPTS[data.section_key] ?? "Write this section of the paper in formal academic prose.";
     const system =
       "You are Co-Research AI, an academic writing co-pilot for Nigerian undergraduates producing GNS 102 term papers. Output clean prose — no markdown headings, no bullet symbols — just paragraphs separated by blank lines. Never invent enrollment data or fabricate first-person interviews.";
-    const user = `Topic: ${paper.topic}\nCourse: ${paper.course_code}\n\nTask: ${brief}${data.extra ? `\n\nExtra guidance from student: ${data.extra}` : ""}`;
+    const user = `Topic: ${paper.topic}\nCourse: ${paper.course_code}${guide ? `\nLecturer instructions: ${guide}` : ""}\n\nTask: ${brief}${data.extra ? `\n\nExtra guidance from student: ${data.extra}` : ""}`;
 
     const output = await callGateway(system, user);
     await supabase.from("ai_generations").insert({

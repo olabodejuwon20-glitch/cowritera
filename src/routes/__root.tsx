@@ -11,6 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerPWA } from "../lib/pwa";
+import { setupOfflineCache } from "../lib/offline-cache";
+
+
 
 function NotFoundComponent() {
   return (
@@ -76,7 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" },
+      { name: "theme-color", content: "#5d1af6" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Co-Research" },
+      { name: "application-name", content: "Co-Research AI" },
+
       { title: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
       { name: "description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
       { name: "author", content: "Co-Research AI" },
@@ -95,8 +106,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", href: "/icon-192.png", type: "image/png", sizes: "192x192" },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -119,6 +134,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    void registerPWA();
+    void setupOfflineCache(queryClient);
+  }, [queryClient]);
+
+
 
   return (
     <QueryClientProvider client={queryClient}>

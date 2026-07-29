@@ -50,7 +50,7 @@ function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 hero-bg flex items-center justify-center px-4 py-16">
+      <main className="pb-[calc(6rem+env(safe-area-inset-bottom))] flex-1 hero-bg flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-md rounded-3xl border bg-card p-8 shadow-[var(--shadow-elegant)]">
           <div className="flex items-center gap-2">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">

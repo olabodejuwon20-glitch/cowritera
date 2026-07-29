@@ -90,3 +90,32 @@ export const updateSection = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const UpdateProjectInput = z.object({
+  id: z.string().uuid(),
+  project: z.record(z.string(), z.any()),
+});
+
+/** Merge-patch the paper's project metadata (course, lecturer guide, group, etc.). */
+export const updateProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UpdateProjectInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error: readErr } = await supabase
+      .from("papers")
+      .select("project")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!row) throw new Error("Paper not found");
+    const project = { ...((row.project as Record<string, unknown>) ?? {}), ...data.project };
+    const { error } = await supabase
+      .from("papers")
+      .update({ project: project as never })
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, project };
+  });
