@@ -55,6 +55,89 @@ export type Database = {
           },
         ]
       }
+      coupon_redemptions: {
+        Row: {
+          amount_discount_kobo: number
+          coupon_id: string
+          created_at: string
+          id: string
+          paper_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_discount_kobo?: number
+          coupon_id: string
+          created_at?: string
+          id?: string
+          paper_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_discount_kobo?: number
+          coupon_id?: string
+          created_at?: string
+          id?: string
+          paper_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          discount_amount_kobo: number | null
+          discount_percent: number | null
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          notes: string | null
+          type: string
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          discount_amount_kobo?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          notes?: string | null
+          type: string
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          discount_amount_kobo?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          notes?: string | null
+          type?: string
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: []
+      }
       papers: {
         Row: {
           course_code: string | null
@@ -278,6 +361,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      redeem_coupon: {
+        Args: { _code: string; _paper_id: string }
+        Returns: Json
       }
     }
     Enums: {
