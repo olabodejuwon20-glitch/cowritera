@@ -132,3 +132,12 @@
   border-radius: 6px;
 }
 
+/* Fit A4 page to mobile viewport width like a PDF reader — page keeps its
+   internal 8.5in layout; the viewport just zooms it to fit. Pinch-zoom
+   still works within the scroll container. */
+@media (max-width: 820px) {
+  .doc-page {
+    zoom: calc((100vw - 1.5rem) / 8.5in);
+  }
+}
+
