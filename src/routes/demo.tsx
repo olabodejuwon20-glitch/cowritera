@@ -102,8 +102,8 @@ function DemoWorkspace() {
         total={total}
         onOpenSections={() => setSidebarOpen(true)}
       />
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr]">
-        <aside className="border-r bg-background hidden md:block">
+      <div className="flex-1 grid grid-cols-[minmax(0,1fr)] md:grid-cols-[280px_minmax(0,1fr)] min-w-0">
+        <aside className="border-r bg-background hidden md:block min-w-0">
           <SidebarContent
             active={active}
             onSelect={selectSection}
@@ -115,8 +115,8 @@ function DemoWorkspace() {
             onMarkAll={markAll}
           />
         </aside>
-        <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
-          <div className="p-4 sm:p-6 md:p-10">
+        <main className="min-w-0 min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-x-auto overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y pinch-zoom" }}>
+          <div className="p-3 sm:p-6 md:p-10 w-max min-w-full">
             <SectionRenderer
               active={active}
               onLocked={() => setShowPurchase(true)}
