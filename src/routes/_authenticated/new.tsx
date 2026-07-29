@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { SiteHeader } from "@/components/site-header";
+import { AppShell, AppBar } from "@/components/app-shell";
 import { createPaper } from "@/lib/papers.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { redeemCoupon } from "@/lib/coupons.functions";
@@ -88,11 +88,10 @@ function NewPaperPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-      <main className="flex-1 flex items-start justify-center px-4 py-12">
-        <div className="w-full max-w-xl rounded-3xl border bg-card p-8 shadow-[var(--shadow-elegant)]">
-          <h1 className="text-2xl font-semibold">Start a new paper</h1>
+    <AppShell appBar={<AppBar title="New paper" back />}>
+      <div className="px-4 py-5">
+        <div className="w-full rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)]">
+          <h1 className="text-xl font-semibold">Start a new paper</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             One Project Pass unlocks unlimited generation and editing for this topic. The topic locks once payment succeeds.
           </p>
