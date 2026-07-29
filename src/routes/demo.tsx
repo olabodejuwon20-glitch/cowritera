@@ -4,8 +4,9 @@ import {
   FileText, BookOpen, ClipboardList, FlaskConical, BarChart3, MessageSquare,
   CheckCircle2, ListOrdered, Library, Download, ShieldCheck, Wand2, Sparkles,
   Info, X, ChevronLeft, Circle, Loader2, TrendingUp, Eye, Plus, Trash2,
-  AlertTriangle, XCircle,
+  AlertTriangle, XCircle, Menu,
 } from "lucide-react";
+
 import { demoProject, sections as staticSections } from "@/lib/demo-content";
 import {
   usePaperDraft, validateDraft, estimateBodyPages, PAGE_LIMIT,
