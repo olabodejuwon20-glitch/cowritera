@@ -141,3 +141,49 @@
   }
 }
 
+
+/* ---------------- Native app shell ---------------- */
+
+@layer base {
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* App-like: no accidental text selection on chrome, but keep it in editors */
+  button, a, nav, header { -webkit-user-select: none; user-select: none; }
+  input, textarea, [contenteditable="true"], .doc-page { -webkit-user-select: text; user-select: text; }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@utility page-enter {
+  animation: page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Document canvas: fixed A4-ish page, isolated pan + pinch-zoom. */
+@utility doc-canvas {
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface-2);
+}
