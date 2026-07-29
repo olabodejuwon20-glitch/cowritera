@@ -83,25 +83,67 @@ export const adminDeleteCoupon = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// User-facing redemption
+// User-facing redemption. Implemented server-side (no exposed RPC) so the
+// coupon table stays behind admin/select-active RLS and privileged writes
+// only happen after we verify the caller owns the paper.
 export const redeemCoupon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ code: z.string().min(3).max(40), paper_id: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: res, error } = await context.supabase.rpc("redeem_coupon", {
-      _code: data.code,
-      _paper_id: data.paper_id,
-    });
-    if (error) throw new Error(error.message);
-    return res as {
-      ok: boolean;
-      type?: "full_unlock" | "discount";
-      unlocked?: boolean;
-      already_paid?: boolean;
-      discount_percent?: number | null;
-      discount_amount_kobo?: number | null;
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Verify paper ownership + unpaid state via user's own client (RLS).
+    const { data: paper, error: paperErr } = await context.supabase
+      .from("papers")
+      .select("id, user_id, paid")
+      .eq("id", data.paper_id)
+      .maybeSingle();
+    if (paperErr) throw new Error(paperErr.message);
+    if (!paper || paper.user_id !== userId) throw new Error("Paper not found");
+    if (paper.paid) {
+      return { ok: true, already_paid: true } as const;
+    }
+
+    const { data: coupon, error: cErr } = await supabaseAdmin
+      .from("coupons")
+      .select("*")
+      .ilike("code", data.code.trim())
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+    if (!coupon) throw new Error("Invalid code");
+    if (!coupon.active) throw new Error("Code is not active");
+    if (coupon.expires_at && new Date(coupon.expires_at as string).getTime() < Date.now()) {
+      throw new Error("Code has expired");
+    }
+    if (coupon.max_uses != null && (coupon.uses ?? 0) >= coupon.max_uses) {
+      throw new Error("Code has reached its usage limit");
+    }
+
+    if (coupon.type === "full_unlock") {
+      const { error: upErr } = await supabaseAdmin
+        .from("papers")
+        .update({ paid: true, status: "active" })
+        .eq("id", data.paper_id)
+        .eq("user_id", userId);
+      if (upErr) throw new Error(upErr.message);
+      await supabaseAdmin.from("coupons").update({ uses: (coupon.uses ?? 0) + 1 }).eq("id", coupon.id);
+      await supabaseAdmin.from("coupon_redemptions").insert({
+        coupon_id: coupon.id,
+        user_id: userId,
+        paper_id: data.paper_id,
+        amount_discount_kobo: 350000,
+      });
+      return { ok: true, type: "full_unlock" as const, unlocked: true };
+    }
+
+    return {
+      ok: true,
+      type: "discount" as const,
+      discount_percent: coupon.discount_percent,
+      discount_amount_kobo: coupon.discount_amount_kobo,
     };
   });
 

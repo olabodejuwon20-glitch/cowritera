@@ -12,7 +12,7 @@ import { AppShell, AppBar } from "@/components/app-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
-import { verifyPayment } from "@/lib/paystack.functions";
+import { verifyPayment, initPayment } from "@/lib/paystack.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { setLastPaper } from "@/lib/last-paper";
@@ -820,20 +820,22 @@ function Paywall({ id }: { id: string }) {
 
 function PayButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
+  const init = useServerFn(initPayment);
   async function pay() {
     setBusy(true);
-    const { data: userData } = await supabase.auth.getUser();
-    const email = userData.user?.email;
-    if (!email) return;
-    const origin = window.location.origin;
-    const res = await fetch("/api/paystack/init", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, amount: 3500, callback_url: `${origin}/paper/${id}?paid=1`, paper_id: id }),
-    });
-    const body = (await res.json()) as { authorization_url?: string };
-    if (body.authorization_url) window.location.href = body.authorization_url;
-    else setBusy(false);
+    try {
+      const origin = window.location.origin;
+      const res = await init({
+        data: { paper_id: id, callback_url: `${origin}/paper/${id}?paid=1` },
+      });
+      if ("authorization_url" in res && res.authorization_url) {
+        window.location.href = res.authorization_url;
+        return;
+      }
+      setBusy(false);
+    } catch {
+      setBusy(false);
+    }
   }
   return (
     <button

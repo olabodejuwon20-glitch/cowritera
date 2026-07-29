@@ -21,7 +21,6 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as ApiPaystackInitRouteImport } from './routes/api/paystack/init'
 import { Route as ApiExportPdfRouteImport } from './routes/api/export/pdf'
 import { Route as ApiExportDocxRouteImport } from './routes/api/export/docx'
 import { Route as AuthenticatedPaperIdRouteImport } from './routes/_authenticated/paper.$id'
@@ -90,11 +89,6 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
-const ApiPaystackInitRoute = ApiPaystackInitRouteImport.update({
-  id: '/api/paystack/init',
-  path: '/api/paystack/init',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiExportPdfRoute = ApiExportPdfRouteImport.update({
   id: '/api/export/pdf',
   path: '/api/export/pdf',
@@ -158,7 +152,6 @@ export interface FileRoutesByFullPath {
   '/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
-  '/api/paystack/init': typeof ApiPaystackInitRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -179,7 +172,6 @@ export interface FileRoutesByTo {
   '/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
-  '/api/paystack/init': typeof ApiPaystackInitRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -203,7 +195,6 @@ export interface FileRoutesById {
   '/_authenticated/paper/$id': typeof AuthenticatedPaperIdRoute
   '/api/export/docx': typeof ApiExportDocxRoute
   '/api/export/pdf': typeof ApiExportPdfRoute
-  '/api/paystack/init': typeof ApiPaystackInitRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -227,7 +218,6 @@ export interface FileRouteTypes {
     | '/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
-    | '/api/paystack/init'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -248,7 +238,6 @@ export interface FileRouteTypes {
     | '/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
-    | '/api/paystack/init'
     | '/admin'
   id:
     | '__root__'
@@ -271,7 +260,6 @@ export interface FileRouteTypes {
     | '/_authenticated/paper/$id'
     | '/api/export/docx'
     | '/api/export/pdf'
-    | '/api/paystack/init'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -285,7 +273,6 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ApiExportDocxRoute: typeof ApiExportDocxRoute
   ApiExportPdfRoute: typeof ApiExportPdfRoute
-  ApiPaystackInitRoute: typeof ApiPaystackInitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -373,13 +360,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/api/paystack/init': {
-      id: '/api/paystack/init'
-      path: '/api/paystack/init'
-      fullPath: '/api/paystack/init'
-      preLoaderRoute: typeof ApiPaystackInitRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/export/pdf': {
       id: '/api/export/pdf'
@@ -493,18 +473,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ApiExportDocxRoute: ApiExportDocxRoute,
   ApiExportPdfRoute: ApiExportPdfRoute,
-  ApiPaystackInitRoute: ApiPaystackInitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

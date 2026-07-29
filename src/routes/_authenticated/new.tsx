@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell, AppBar } from "@/components/app-shell";
 import { createPaper } from "@/lib/papers.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { redeemCoupon } from "@/lib/coupons.functions";
+import { initPayment } from "@/lib/paystack.functions";
 import { AlertTriangle, Loader2, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/new")({
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/new")({
 function NewPaperPage() {
   const create = useServerFn(createPaper);
   const redeem = useServerFn(redeemCoupon);
+  const init = useServerFn(initPayment);
   const navigate = useNavigate();
   const [topic, setTopic] = useState("");
   const [courseCode, setCourseCode] = useState("GNS 102");
@@ -37,19 +38,14 @@ function NewPaperPage() {
     try {
       const { id } = await create({ data: { topic: topic.trim(), course_code: courseCode.trim() } });
 
-      // Apply coupon code (if any) before checkout
-      let amount = 3500;
-      if (code.trim()) {
+      // Full-unlock codes redeem immediately; discount codes are applied server-side at init.
+      const trimmedCode = code.trim();
+      if (trimmedCode) {
         try {
-          const r = await redeem({ data: { code: code.trim(), paper_id: id } });
+          const r = await redeem({ data: { code: trimmedCode, paper_id: id } });
           if (r.type === "full_unlock" || r.unlocked || r.already_paid) {
             navigate({ to: "/paper/$id", params: { id } });
             return;
-          }
-          if (r.type === "discount") {
-            if (r.discount_percent) amount = Math.max(100, Math.round(amount * (1 - r.discount_percent / 100)));
-            else if (r.discount_amount_kobo) amount = Math.max(100, amount - Math.round(r.discount_amount_kobo / 100));
-            setNote(`Code applied — new total ₦${amount.toLocaleString()}.`);
           }
         } catch (ce) {
           setErr((ce as Error).message);
@@ -58,29 +54,25 @@ function NewPaperPage() {
         }
       }
 
-      // Kick off Paystack
-      const { data: userData } = await supabase.auth.getUser();
-      const email = userData.user?.email;
-      if (!email) throw new Error("Could not read your account email.");
       const origin = window.location.origin;
-      const res = await fetch("/api/paystack/init", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email,
-          amount,
-          callback_url: `${origin}/paper/${id}?paid=1`,
+      const res = await init({
+        data: {
           paper_id: id,
-        }),
+          callback_url: `${origin}/paper/${id}?paid=1`,
+          coupon_code: trimmedCode || null,
+        },
       });
-      const body = (await res.json()) as { authorization_url?: string; error?: string };
-      if (!res.ok || !body.authorization_url) {
-        // fallback: still navigate to the paper (user can retry from workspace)
-        setErr(body.error ?? "Could not start Paystack. You can retry from the paper page.");
+      if ("already_paid" in res && res.already_paid) {
         navigate({ to: "/paper/$id", params: { id } });
         return;
       }
-      window.location.href = body.authorization_url;
+      if ("authorization_url" in res && res.authorization_url) {
+        if (trimmedCode) setNote(`Total: ₦${(res.amount_kobo / 100).toLocaleString()}`);
+        window.location.href = res.authorization_url;
+        return;
+      }
+      setErr("Could not start Paystack. You can retry from the paper page.");
+      navigate({ to: "/paper/$id", params: { id } });
     } catch (e2) {
       setErr((e2 as Error).message);
       setBusy(false);
