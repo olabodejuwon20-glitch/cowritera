@@ -123,8 +123,12 @@
   color: #111;
   background: white;
   padding: 1in;
+  width: 8.5in;
+  min-width: 8.5in;
   max-width: 8.5in;
+  flex: none;
   margin-inline: auto;
   box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.2), 0 4px 12px -6px rgb(0 0 0 / 0.08);
   border-radius: 6px;
 }
+
