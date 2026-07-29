@@ -868,19 +868,8 @@ function PurchaseModal({ onClose }: { onClose: () => void }) {
       return;
     }
     setLoading(true);
-    try {
-      const res = await fetch("/api/paystack/init", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, amount: 3500 }),
-      });
-      const data = (await res.json()) as { authorization_url?: string; error?: string };
-      if (!res.ok || !data.authorization_url) throw new Error(data.error ?? "Checkout failed");
-      window.location.href = data.authorization_url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
-      setLoading(false);
-    }
+    setError("Please sign in to purchase a Project Pass — checkout runs on the authenticated workspace.");
+    setLoading(false);
   };
 
   return (
