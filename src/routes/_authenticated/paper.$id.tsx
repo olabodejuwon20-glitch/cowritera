@@ -6,8 +6,9 @@ import { SiteHeader } from "@/components/site-header";
 import { getPaper, updateSection } from "@/lib/papers.functions";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
 import { verifyPayment } from "@/lib/paystack.functions";
+import { redeemCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Sparkles, BookOpen, Save, Lock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, Save, Lock, AlertTriangle, CheckCircle2, Ticket } from "lucide-react";
 
 type Search = { paid?: string; reference?: string; trxref?: string };
 
