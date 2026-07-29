@@ -130,7 +130,7 @@ function TopBar({ onPurchase, percent, done, total }: { onPurchase: () => void; 
           <span className="text-xs font-medium tabular-nums">{done}/{total}</span>
         </div>
         <button onClick={onPurchase} className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:brightness-110">
-          Unlock Project Pass
+          Unlock
         </button>
       </div>
     </div>
