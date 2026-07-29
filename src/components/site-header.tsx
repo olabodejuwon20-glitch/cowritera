@@ -1,3 +1,4 @@
+import { BottomNav } from "@/components/app-shell";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { GraduationCap, Menu, X, LogOut, Shield } from "lucide-react";
 import { useState } from "react";

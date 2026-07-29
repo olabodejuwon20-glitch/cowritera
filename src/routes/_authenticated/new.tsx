@@ -139,14 +139,14 @@ function NewPaperPage() {
             <button
               type="submit"
               disabled={busy || topic.trim().length < 4}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 font-medium text-primary-foreground disabled:opacity-60"
+              className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-medium text-primary-foreground transition active:scale-[0.98] disabled:opacity-60"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               Continue to payment (₦3,500)
             </button>
           </form>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
