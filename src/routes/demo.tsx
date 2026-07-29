@@ -94,7 +94,7 @@ function DemoWorkspace() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="min-h-screen bg-surface flex flex-col overflow-x-hidden">
       <TopBar
         onPurchase={() => setShowPurchase(true)}
         percent={percent}
