@@ -56,6 +56,11 @@ export function SiteHeader() {
           {user ? (
             <>
               <Link to="/dashboard" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Dashboard</Link>
+              {isAdmin && (
+                <Link to={"/admin" as any} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-primary hover:text-primary/80">
+                  <Shield className="h-3.5 w-3.5" /> Admin
+                </Link>
+              )}
               <button onClick={handleSignOut} className="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm hover:bg-primary-soft">
                 <LogOut className="h-3.5 w-3.5" /> Sign out
               </button>
