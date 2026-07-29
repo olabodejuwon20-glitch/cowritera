@@ -30,6 +30,8 @@ export function SiteHeader() {
     navigate({ to: "/" });
   }
   return (
+    <>
+    <BottomNav />
     <header className="sticky top-0 z-40 w-full glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 group">
@@ -111,12 +113,13 @@ export function SiteHeader() {
         </div>
       )}
     </header>
+    </>
   );
 }
 
 export function SiteFooter() {
   return (
-    <footer className="border-t bg-surface">
+    <footer className="border-t bg-surface pb-[calc(6rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid gap-8 md:grid-cols-4 text-sm">
         <div>
           <div className="flex items-center gap-2">
