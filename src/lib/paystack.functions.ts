@@ -66,7 +66,7 @@ export const initPayment = createServerFn({ method: "POST" })
     if (!paper) throw new Error("Paper not found");
     if (paper.paid) return { already_paid: true as const };
 
-    const { amount_kobo } = await computeExpectedAmountKobo(supabase, data.coupon_code ?? null);
+    const { amount_kobo } = await computeExpectedAmountKobo(data.coupon_code ?? null);
 
     const callback_url = data.callback_url ?? "";
 
