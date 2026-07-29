@@ -616,7 +616,7 @@ function CoverPage({ paper }: { paper: PaperCtx }) {
         <div className="text-center mt-14" style={{ fontSize: "12pt" }}>
           <div>Course Code: <span className="font-semibold">{demoProject.courseCode}</span></div>
           <div className="mt-1">Course Title: <span className="font-semibold">{demoProject.courseTitle}</span></div>
-          <div className="mt-1">Lecturer: <span className="font-semibold">{demoProject.lecturer}</span></div>
+          <div className="mt-1"><br /></div>
           <div className="mt-1">Group: <span className="font-semibold">{demoProject.groupName}</span></div>
         </div>
 
