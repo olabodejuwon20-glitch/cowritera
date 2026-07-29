@@ -6,8 +6,9 @@ import { SiteHeader } from "@/components/site-header";
 import { getPaper, updateSection } from "@/lib/papers.functions";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
 import { verifyPayment } from "@/lib/paystack.functions";
+import { redeemCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Sparkles, BookOpen, Save, Lock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, Save, Lock, AlertTriangle, CheckCircle2, Ticket } from "lucide-react";
 
 type Search = { paid?: string; reference?: string; trxref?: string };
 
@@ -121,11 +122,12 @@ function PaperPage() {
           <div className="mt-6 rounded-2xl border border-amber-300/40 bg-amber-50/60 dark:bg-amber-950/20 p-4 text-sm">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600" />
-              <div>
+              <div className="flex-1">
                 <div className="font-medium">Awaiting Project Pass</div>
                 <div className="text-muted-foreground">
                   AI generation and research are locked until this project's ₦3,500 Project Pass is paid.
                 </div>
+                <RedeemCoupon paperId={id} />
               </div>
             </div>
           </div>
@@ -174,6 +176,53 @@ function PayButton({ id }: { id: string }) {
       {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
       Buy Project Pass — ₦3,500
     </button>
+  );
+}
+
+function RedeemCoupon({ paperId }: { paperId: string }) {
+  const qc = useQueryClient();
+  const redeem = useServerFn(redeemCoupon);
+  const [code, setCode] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setMsg(null); setErr(null);
+    try {
+      const r = await redeem({ data: { code: code.trim(), paper_id: paperId } });
+      if (r.type === "full_unlock" || r.unlocked) {
+        setMsg("Code accepted. Project unlocked.");
+        qc.invalidateQueries({ queryKey: ["paper", paperId] });
+      } else if (r.type === "discount") {
+        const off = r.discount_percent ? `${r.discount_percent}% off` : `₦${((r.discount_amount_kobo ?? 0) / 100).toLocaleString()} off`;
+        setMsg(`Code applied: ${off}. Proceed to Paystack to complete checkout.`);
+      }
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-3 flex items-stretch gap-2 flex-wrap">
+      <div className="inline-flex items-center gap-2 rounded-xl border bg-background px-2">
+        <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          placeholder="COUPON CODE"
+          className="py-2 text-sm outline-none font-mono uppercase bg-transparent w-40"
+        />
+      </div>
+      <button disabled={busy || !code.trim()} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm hover:bg-primary-soft disabled:opacity-60">
+        {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Redeem
+      </button>
+      {msg && <div className="basis-full text-xs text-primary">{msg}</div>}
+      {err && <div className="basis-full text-xs text-destructive">{err}</div>}
+    </form>
   );
 }
 

@@ -1,7 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { GraduationCap, Menu, X, LogOut } from "lucide-react";
+import { GraduationCap, Menu, X, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useSession, signOut } from "@/lib/auth";
+import { amIAdmin } from "@/lib/admin.functions";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -14,6 +17,13 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
+  const amIAdminFn = useServerFn(amIAdmin);
+  const { data: adminData } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => amIAdminFn(),
+    enabled: !!user,
+  });
+  const isAdmin = !!adminData?.admin;
   async function handleSignOut() {
     await signOut();
     navigate({ to: "/" });
@@ -46,6 +56,11 @@ export function SiteHeader() {
           {user ? (
             <>
               <Link to="/dashboard" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Dashboard</Link>
+              {isAdmin && (
+                <Link to={"/admin" as any} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-primary hover:text-primary/80">
+                  <Shield className="h-3.5 w-3.5" /> Admin
+                </Link>
+              )}
               <button onClick={handleSignOut} className="inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm hover:bg-primary-soft">
                 <LogOut className="h-3.5 w-3.5" /> Sign out
               </button>
