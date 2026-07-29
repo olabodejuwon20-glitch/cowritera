@@ -122,11 +122,12 @@ function PaperPage() {
           <div className="mt-6 rounded-2xl border border-amber-300/40 bg-amber-50/60 dark:bg-amber-950/20 p-4 text-sm">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600" />
-              <div>
+              <div className="flex-1">
                 <div className="font-medium">Awaiting Project Pass</div>
                 <div className="text-muted-foreground">
                   AI generation and research are locked until this project's ₦3,500 Project Pass is paid.
                 </div>
+                <RedeemCoupon paperId={id} />
               </div>
             </div>
           </div>
