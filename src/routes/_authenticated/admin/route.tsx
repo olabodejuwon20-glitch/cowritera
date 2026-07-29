@@ -10,14 +10,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const NAV = [
+const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },
   { to: "/admin/finance", label: "Finance", icon: Wallet },
   { to: "/admin/coupons", label: "Coupons", icon: Ticket },
   { to: "/admin/help", label: "Help", icon: HelpCircle },
-] as const;
+];
 
 function AdminLayout() {
   const fn = useServerFn(amIAdmin);
