@@ -200,7 +200,7 @@ function PaperPage() {
           }
         />
       }
-      className="flex flex-col"
+      className="flex flex-col [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-col"
     >
       {/* progress + step chips: fixed, never scrolls horizontally with the page */}
       <div className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
@@ -839,7 +839,7 @@ function PayButton({ id }: { id: string }) {
     <button
       onClick={pay}
       disabled={busy}
-      className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-medium text-primary-foreground active:scale-[0.98] disabled:opacity-60 transition"
+      className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-medium text-primary-foreground active:scale-[0.98] disabled:opacity-60 transition"
     >
       {busy && <Loader2 className="h-4 w-4 animate-spin" />}
       Pay ₦3,500 with Paystack
