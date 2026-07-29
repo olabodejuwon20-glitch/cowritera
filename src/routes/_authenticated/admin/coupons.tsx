@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { adminCreateCoupon, adminDeleteCoupon, adminListCoupons, adminUpdateCoupon } from "@/lib/coupons.functions";
+import { adminCreateCoupon, adminDeleteCoupon, adminListCoupons, adminListRedemptions, adminUpdateCoupon } from "@/lib/coupons.functions";
 import { useState } from "react";
-import { Loader2, Ticket, Plus, Trash2, Pencil, X } from "lucide-react";
+import { Loader2, Ticket, Plus, Trash2, Pencil, X, History } from "lucide-react";
 import { Tip } from "./index";
 
 export const Route = createFileRoute("/_authenticated/admin/coupons")({
@@ -122,6 +122,8 @@ function CouponsPage() {
         </div>
       )}
 
+      <RedemptionHistory />
+
       {(creating || editing) && (
         <CouponModal
           initial={editing ?? undefined}
@@ -132,6 +134,89 @@ function CouponsPage() {
         />
       )}
     </div>
+  );
+}
+
+type Redemption = {
+  id: string;
+  code: string;
+  type: "full_unlock" | "discount";
+  user_name: string;
+  user_email: string;
+  paper_id: string | null;
+  paper_topic: string;
+  course_code: string;
+  amount_discount_kobo: number;
+  created_at: string;
+  status: string;
+};
+
+function RedemptionHistory() {
+  const listRedemptions = useServerFn(adminListRedemptions);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-coupon-redemptions"],
+    queryFn: () => listRedemptions(),
+  });
+  const rows = (data ?? []) as Redemption[];
+
+  return (
+    <section className="space-y-3 pt-4">
+      <div className="flex items-center gap-2">
+        <History className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-lg font-semibold">Redemption history</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">Every time a student uses a code, it shows up here with the project it was applied to.</p>
+
+      {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+      {error && <div className="text-sm text-destructive">{(error as Error).message}</div>}
+
+      {!isLoading && rows.length === 0 && (
+        <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          No redemptions yet.
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <div className="rounded-2xl border bg-card overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-surface text-xs text-muted-foreground">
+              <tr>
+                <th className="text-left px-4 py-2 font-medium">Code</th>
+                <th className="text-left px-4 py-2 font-medium">User</th>
+                <th className="text-left px-4 py-2 font-medium">Project</th>
+                <th className="text-left px-4 py-2 font-medium">Value</th>
+                <th className="text-left px-4 py-2 font-medium">Redeemed at</th>
+                <th className="text-left px-4 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {rows.map((r) => (
+                <tr key={r.id}>
+                  <td className="px-4 py-2 font-mono font-medium">{r.code}</td>
+                  <td className="px-4 py-2">
+                    <div className="truncate max-w-[180px]">{r.user_name}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[180px]">{r.user_email}</div>
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="truncate max-w-[240px]">{r.paper_topic}</div>
+                    {r.course_code && <div className="text-xs text-muted-foreground">{r.course_code}</div>}
+                  </td>
+                  <td className="px-4 py-2">
+                    {r.type === "full_unlock" ? "Free Project Pass" : `₦${(r.amount_discount_kobo / 100).toLocaleString()}`}
+                  </td>
+                  <td className="px-4 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${r.status === "Unlocked" ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {r.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

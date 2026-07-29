@@ -104,3 +104,56 @@ export const redeemCoupon = createServerFn({ method: "POST" })
       discount_amount_kobo?: number | null;
     };
   });
+
+export const adminListRedemptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: reds, error } = await supabaseAdmin
+      .from("coupon_redemptions")
+      .select("id, coupon_id, user_id, paper_id, amount_discount_kobo, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    const rows = reds ?? [];
+    if (rows.length === 0) return [];
+
+    const couponIds = [...new Set(rows.map((r: any) => r.coupon_id).filter(Boolean))];
+    const paperIds = [...new Set(rows.map((r: any) => r.paper_id).filter(Boolean))];
+    const userIds = [...new Set(rows.map((r: any) => r.user_id).filter(Boolean))];
+
+    const [coupons, papers, profiles, authUsers] = await Promise.all([
+      supabaseAdmin.from("coupons").select("id, code, type").in("id", couponIds),
+      paperIds.length
+        ? supabaseAdmin.from("papers").select("id, topic, course_code, paid, status").in("id", paperIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabaseAdmin.from("profiles").select("id, full_name").in("id", userIds),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 500 }),
+    ]);
+
+    const couponById = new Map((coupons.data ?? []).map((c: any) => [c.id, c]));
+    const paperById = new Map((papers.data ?? []).map((p: any) => [p.id, p]));
+    const profileById = new Map((profiles.data ?? []).map((p: any) => [p.id, p]));
+    const emailById = new Map<string, string>();
+    for (const u of authUsers?.data?.users ?? []) emailById.set(u.id, u.email ?? "");
+
+    return rows.map((r: any) => {
+      const c: any = couponById.get(r.coupon_id);
+      const p: any = paperById.get(r.paper_id);
+      return {
+        id: r.id,
+        code: c?.code ?? "—",
+        type: (c?.type ?? "discount") as "full_unlock" | "discount",
+        user_name: (profileById.get(r.user_id) as any)?.full_name || "Unnamed",
+        user_email: emailById.get(r.user_id) ?? "",
+        paper_id: r.paper_id,
+        paper_topic: p?.topic || "—",
+        course_code: p?.course_code ?? "",
+        amount_discount_kobo: r.amount_discount_kobo ?? 0,
+        created_at: r.created_at,
+        status: p ? (p.paid ? "Unlocked" : "Applied") : "Unknown",
+      };
+    });
+  });

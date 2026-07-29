@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/site-header";
 import { createPaper } from "@/lib/papers.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { redeemCoupon } from "@/lib/coupons.functions";
+import { AlertTriangle, Loader2, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/new")({
   head: () => ({
@@ -20,11 +21,14 @@ export const Route = createFileRoute("/_authenticated/new")({
 
 function NewPaperPage() {
   const create = useServerFn(createPaper);
+  const redeem = useServerFn(redeemCoupon);
   const navigate = useNavigate();
   const [topic, setTopic] = useState("");
   const [courseCode, setCourseCode] = useState("GNS 102");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [note, setNote] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +36,29 @@ function NewPaperPage() {
     setErr(null);
     try {
       const { id } = await create({ data: { topic: topic.trim(), course_code: courseCode.trim() } });
-      // Kick off Paystack immediately
+
+      // Apply coupon code (if any) before checkout
+      let amount = 3500;
+      if (code.trim()) {
+        try {
+          const r = await redeem({ data: { code: code.trim(), paper_id: id } });
+          if (r.type === "full_unlock" || r.unlocked || r.already_paid) {
+            navigate({ to: "/paper/$id", params: { id } });
+            return;
+          }
+          if (r.type === "discount") {
+            if (r.discount_percent) amount = Math.max(100, Math.round(amount * (1 - r.discount_percent / 100)));
+            else if (r.discount_amount_kobo) amount = Math.max(100, amount - Math.round(r.discount_amount_kobo / 100));
+            setNote(`Code applied — new total ₦${amount.toLocaleString()}.`);
+          }
+        } catch (ce) {
+          setErr((ce as Error).message);
+          setBusy(false);
+          return;
+        }
+      }
+
+      // Kick off Paystack
       const { data: userData } = await supabase.auth.getUser();
       const email = userData.user?.email;
       if (!email) throw new Error("Could not read your account email.");
@@ -42,7 +68,7 @@ function NewPaperPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           email,
-          amount: 3500,
+          amount,
           callback_url: `${origin}/paper/${id}?paid=1`,
           paper_id: id,
         }),
@@ -92,6 +118,20 @@ function NewPaperPage() {
               />
               <span className="mt-1 block text-xs text-muted-foreground">Choose carefully — you cannot swap this for a completely different topic later.</span>
             </label>
+            <label className="block">
+              <span className="text-sm font-medium">Have a code?</span>
+              <div className="mt-1.5 flex items-center gap-2 rounded-xl border bg-background px-3">
+                <Ticket className="h-4 w-4 text-muted-foreground" />
+                <input
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value.toUpperCase()); setNote(null); }}
+                  placeholder="COUPON CODE (optional)"
+                  className="flex-1 bg-transparent py-2.5 text-sm font-mono uppercase outline-none"
+                />
+              </div>
+              <span className="mt-1 block text-xs text-muted-foreground">Full-unlock codes skip payment entirely; discount codes reduce the amount at checkout.</span>
+            </label>
+            {note && <div className="rounded-xl border border-primary/30 bg-primary-soft p-3 text-sm text-primary">{note}</div>}
             {err && (
               <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4 mt-0.5" /> {err}
