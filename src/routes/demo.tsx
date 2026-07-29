@@ -89,7 +89,7 @@ function DemoWorkspace() {
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <TopBar onPurchase={() => setShowPurchase(true)} percent={percent} done={done} total={total} />
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_340px]">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr]">
         <Sidebar active={active} onSelect={setActive} completed={completed} percent={percent} done={done} total={total} onReset={reset} onMarkAll={markAll} />
         <main className="min-h-[calc(100vh-4rem)] bg-surface-2/40 overflow-auto">
           <div className="p-6 md:p-10">
@@ -104,15 +104,6 @@ function DemoWorkspace() {
             />
           </div>
         </main>
-        <RightPanel
-          onLocked={() => setShowPurchase(true)}
-          percent={percent}
-          done={done}
-          total={total}
-          draft={paper.draft}
-          checks={checks}
-          onOpenSection={setActive}
-        />
       </div>
       {showPurchase && <PurchaseModal onClose={() => setShowPurchase(false)} />}
     </div>
