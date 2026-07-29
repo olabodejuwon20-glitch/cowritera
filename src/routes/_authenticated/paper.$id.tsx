@@ -12,7 +12,7 @@ import { AppShell, AppBar } from "@/components/app-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
-import { verifyPayment } from "@/lib/paystack.functions";
+import { verifyPayment, initPayment } from "@/lib/paystack.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { setLastPaper } from "@/lib/last-paper";
