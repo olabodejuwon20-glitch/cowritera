@@ -31,8 +31,8 @@ export function SiteHeader() {
   }
   return (
     <>
-    <BottomNav />
     <header className="sticky top-0 z-40 w-full glass">
+
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 group">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-soft)] group-hover:scale-105 transition-transform">
