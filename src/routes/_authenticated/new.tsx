@@ -5,6 +5,12 @@ import { AppShell, AppBar } from "@/components/app-shell";
 import { createPaper } from "@/lib/papers.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { initPayment } from "@/lib/paystack.functions";
+import {
+  ProjectDetailsFields,
+  emptyDetails,
+  cleanDetails,
+  type ProjectDetails,
+} from "@/components/project-details-form";
 import { AlertTriangle, Loader2, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/new")({
@@ -25,7 +31,7 @@ function NewPaperPage() {
   const init = useServerFn(initPayment);
   const navigate = useNavigate();
   const [topic, setTopic] = useState("");
-  const [courseCode, setCourseCode] = useState("GNS 102");
+  const [details, setDetails] = useState<ProjectDetails>(emptyDetails);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -36,7 +42,15 @@ function NewPaperPage() {
     setBusy(true);
     setErr(null);
     try {
-      const { id } = await create({ data: { topic: topic.trim(), course_code: courseCode.trim() } });
+      const clean = cleanDetails(details);
+      const { id } = await create({
+        data: {
+          topic: topic.trim(),
+          course_code: (clean.course_code || "GNS 102").trim(),
+          details: clean,
+        },
+      });
+
 
       // Full-unlock codes redeem immediately; discount codes are applied server-side at init.
       const trimmedCode = code.trim();
