@@ -383,7 +383,6 @@ export function WorkspaceShell({
   wide = false,
   focus = false,
 }: {
-
   title: ReactNode;
   status?: ReactNode;
   breadcrumbs?: Crumb[];
@@ -392,6 +391,8 @@ export function WorkspaceShell({
   /** true = content area manages its own scroll (document workspace) */
   fill?: boolean;
   wide?: boolean;
+  /** Focus Mode: hides the bottom tab bar and chrome for the document workspace */
+  focus?: boolean;
 }) {
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -400,11 +401,6 @@ export function WorkspaceShell({
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("cr-sidebar-collapsed") === "1");
-  }, []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   function toggleCollapsed() {
@@ -427,39 +423,34 @@ export function WorkspaceShell({
         <SidebarBody collapsed={collapsed} />
       </aside>
 
-      {/* Mobile drawer */}
-      {drawer && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            aria-label="Close navigation"
-            onClick={() => setDrawer(false)}
-            className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px]"
-          />
-          <div className="absolute inset-y-0 left-0 w-[84%] max-w-xs border-r bg-card pt-[env(safe-area-inset-top)] shadow-[var(--shadow-elegant)]">
-            <button
-              aria-label="Close navigation"
-              onClick={() => setDrawer(false)}
-              className="absolute right-2 top-[calc(0.5rem+env(safe-area-inset-top))] grid h-10 w-10 place-items-center rounded-full hover:bg-primary-soft"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <SidebarBody collapsed={false} onNavigate={() => setDrawer(false)} />
-          </div>
-        </div>
-      )}
+      {/* Mobile slide-out drawer (swipe-to-dismiss) */}
+      <SideDrawer open={drawer} onOpenChange={setDrawer}>
+        <SidebarBody collapsed={false} onNavigate={() => setDrawer(false)} />
+      </SideDrawer>
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 shrink-0 border-b bg-card/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-          <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-5">
+          <div className="grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 sm:h-16 sm:gap-3 sm:px-5">
             <div className="flex items-center gap-1">
-              <button
-                aria-label="Open navigation"
-                onClick={() => { tap(); setDrawer(true); }}
-                className="grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft md:hidden"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+              {focus ? (
+                <Link
+                  to={"/dashboard" as never}
+                  aria-label="Back to projects"
+                  onClick={() => tap()}
+                  className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft md:hidden"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Link>
+              ) : (
+                <button
+                  aria-label="Open navigation"
+                  onClick={() => { tap(); setDrawer(true); }}
+                  className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              )}
               <button
                 aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 onClick={toggleCollapsed}
@@ -469,26 +460,30 @@ export function WorkspaceShell({
               </button>
             </div>
 
-            <div className="min-w-0">
+            <div className={cn("min-w-0", focus && "text-center md:text-left")}>
               <div className="truncate text-[15px] font-semibold leading-tight sm:text-base">{title}</div>
               {status && <div className="truncate text-[11px] text-muted-foreground">{status}</div>}
             </div>
 
             <div className="flex items-center gap-1">
               {headerActions}
-              <button
-                aria-label="Notifications"
-                className="relative grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
-              <Link
-                to={"/account" as never}
-                aria-label="Profile"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
-              >
-                {initials}
-              </Link>
+              {!focus && (
+                <button
+                  aria-label="Notifications"
+                  className="relative hidden h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft sm:grid"
+                >
+                  <Bell className="h-5 w-5" />
+                </button>
+              )}
+              {!focus && (
+                <Link
+                  to={"/account" as never}
+                  aria-label="Profile"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
+                >
+                  {initials}
+                </Link>
+              )}
             </div>
           </div>
           <StatusStrip />
@@ -498,9 +493,15 @@ export function WorkspaceShell({
           <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
         ) : (
           <main className="flex-1 overflow-y-auto overscroll-y-contain">
-            <div className={cn("page-enter mx-auto w-full px-4 py-6 sm:px-8 sm:py-8", wide ? "max-w-7xl" : "max-w-5xl")}>
+            <div
+              className={cn(
+                "page-enter mx-auto w-full px-4 py-6 sm:px-8 sm:py-8",
+                wide ? "max-w-7xl" : "max-w-5xl",
+                !focus && "pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8",
+              )}
+            >
               {breadcrumbs && (
-                <div className="mb-4">
+                <div className="mb-4 hidden sm:block">
                   <Breadcrumbs items={breadcrumbs} />
                 </div>
               )}
@@ -509,8 +510,11 @@ export function WorkspaceShell({
           </main>
         )}
       </div>
+
+      {!focus && <BottomTabBar />}
     </div>
   );
 }
+
 
 export { FileText };
