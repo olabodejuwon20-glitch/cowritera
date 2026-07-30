@@ -110,6 +110,33 @@ function PaperPage() {
     if (paperQ.data) setLastPaper(id, (paperQ.data as { topic?: string }).topic);
   }, [paperQ.data, id]);
 
+  // Restore the last-open section for this paper between sessions.
+  useEffect(() => {
+    const saved = Number(localStorage.getItem(`coresearch.step.${id}`));
+    if (Number.isFinite(saved) && saved > 0 && saved < STEPS.length) setStepIndex(saved);
+  }, [id]);
+  useEffect(() => {
+    localStorage.setItem(`coresearch.step.${id}`, String(stepIndex));
+  }, [id, stepIndex]);
+
+  // Horizontal swipe between sections (ignored inside the zoomable document canvas).
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return (touch.current = null);
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    tap();
+    setStepIndex((i) => Math.min(STEPS.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1))));
+  };
+
+
   // Background sync: flush queued offline edits whenever we come back online.
   const sendPending = useCallback(
     (item: PendingSave) => save({ data: { id: item.paper_id, section_key: item.section_key, content: item.content } }),
