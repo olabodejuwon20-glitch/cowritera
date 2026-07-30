@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { WorkspaceShell, Card, PageTitle, ActionButton } from "@/components/workspace-shell";
+import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
-import { Plus, FileText, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
