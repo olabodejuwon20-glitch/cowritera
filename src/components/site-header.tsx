@@ -1,4 +1,4 @@
-import { BottomNav } from "@/components/app-shell";
+
 import { Link, useNavigate } from "@tanstack/react-router";
 import { GraduationCap, Menu, X, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
@@ -119,7 +119,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t bg-surface pb-[calc(6rem+env(safe-area-inset-bottom))]">
+    <footer className="border-t bg-surface pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid gap-8 md:grid-cols-4 text-sm">
         <div>
           <div className="flex items-center gap-2">

@@ -25,3 +25,16 @@ export function useSession() {
 export async function signOut() {
   await supabase.auth.signOut();
 }
+
+/**
+ * Marketing/public pages call this so signed-in users are sent straight into
+ * the app instead of seeing the marketing site.
+ */
+export function useRedirectWhenAuthed(to: string = "/dashboard") {
+  const { user, loading } = useSession();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!loading && user) navigate({ to: to as never, replace: true });
+  }, [user, loading, navigate, to]);
+  return { redirecting: !!user };
+}
