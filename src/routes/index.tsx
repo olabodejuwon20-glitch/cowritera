@@ -4,6 +4,7 @@ import {
   ArrowRight, Check, GraduationCap, Layers, Zap,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { useRedirectWhenAuthed } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const { redirecting } = useRedirectWhenAuthed("/dashboard");
+  if (redirecting) return null;
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />

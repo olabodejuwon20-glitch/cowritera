@@ -11,6 +11,12 @@ import {
 import { AppShell, AppBar } from "@/components/app-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
+import {
+  ProjectDetailsFields,
+  detailsFromProject,
+  cleanDetails,
+  type ProjectDetails,
+} from "@/components/project-details-form";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
 import { verifyPayment, initPayment } from "@/lib/paystack.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
@@ -371,8 +377,58 @@ function SheetRow({ icon: Icon, label, onClick }: { icon: typeof Menu; label: st
 }
 
 /* ------------------------------------------------------------------ */
+/* Cover page                                                          */
+/* ------------------------------------------------------------------ */
+
+function CoverPage({
+  topic, project, content,
+}: { topic: string; project: Record<string, unknown>; content: string }) {
+  const d = detailsFromProject(project);
+  const members = d.members.filter((m) => m.name || m.matric);
+  const line = (v: string, cls = "") => (v ? <div className={cls}>{v}</div> : null);
+
+  return (
+    <div className="text-center leading-relaxed">
+      {line(d.institution, "font-bold uppercase")}
+      {line(d.faculty, "uppercase")}
+      {line(d.department, "uppercase")}
+      <div className="mt-8 font-bold uppercase">{topic}</div>
+      {line([d.course_code, d.course_title].filter(Boolean).join(" — "), "mt-6 uppercase")}
+      {line(d.group_name, "mt-6 font-semibold uppercase")}
+
+      {members.length > 0 && (
+        <table className="mx-auto mt-6 w-full border-collapse text-left">
+          <thead>
+            <tr>
+              <th className="border px-2 py-1 text-center">S/N</th>
+              <th className="border px-2 py-1">Name</th>
+              <th className="border px-2 py-1">Matric No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((m, i) => (
+              <tr key={i}>
+                <td className="border px-2 py-1 text-center">{i + 1}</td>
+                <td className="border px-2 py-1">{m.name}</td>
+                <td className="border px-2 py-1">{m.matric}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {line(d.lecturer_name ? `LECTURER: ${d.lecturer_name}` : "", "mt-8 uppercase")}
+      {line(d.session, "mt-2")}
+      {line(d.submission_date, "mt-2")}
+      {content ? <div className="mt-8 whitespace-pre-wrap text-left">{content}</div> : null}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Document canvas — fixed A4 page, isolated pan + pinch-zoom          */
 /* ------------------------------------------------------------------ */
+
 
 function DocView({
   step, content, topic, project,
@@ -384,14 +440,9 @@ function DocView({
     <div className="doc-canvas h-full px-3 py-4">
       <div className="doc-page">
         {isCover ? (
-          <div className="text-center leading-relaxed">
-            <div className="font-bold uppercase">{String(project.institution ?? "")}</div>
-            <div className="uppercase">{String(project.faculty ?? "")}</div>
-            <div className="mt-8 font-bold uppercase">{topic}</div>
-            <div className="mt-8">{String(project.group_name ?? "")}</div>
-            <div className="mt-8 whitespace-pre-wrap text-left">{content}</div>
-          </div>
+          <CoverPage topic={topic} project={project} content={content} />
         ) : (
+
           <>
             {step.heading && <div className="mb-4 text-center font-bold uppercase">{step.heading}</div>}
             {paragraphs.length ? (
@@ -575,25 +626,11 @@ function AiSheet({
 function ProjectInfo({ paperId, project }: { paperId: string; project: Record<string, unknown> }) {
   const qc = useQueryClient();
   const update = useServerFn(updateProject);
-  const [form, setForm] = useState({
-    institution: String(project.institution ?? ""),
-    faculty: String(project.faculty ?? ""),
-    department: String(project.department ?? ""),
-    group_name: String(project.group_name ?? ""),
-    lecturer_name: String(project.lecturer_name ?? ""),
-  });
+  const [form, setForm] = useState<ProjectDetails>(() => detailsFromProject(project));
   const m = useMutation({
-    mutationFn: () => update({ data: { id: paperId, project: form } }),
+    mutationFn: () => update({ data: { id: paperId, project: cleanDetails(form) } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["paper", paperId] }),
   });
-
-  const fields: [keyof typeof form, string, string][] = [
-    ["institution", "Institution", "e.g. University of Lagos"],
-    ["faculty", "Faculty", "e.g. Faculty of Science"],
-    ["department", "Department", "e.g. Computer Science"],
-    ["group_name", "Group name", "e.g. AGP 002"],
-    ["lecturer_name", "Lecturer", "Optional"],
-  ];
 
   return (
     <div className="h-full overflow-y-auto px-4 py-5">
@@ -602,18 +639,8 @@ function ProjectInfo({ paperId, project }: { paperId: string; project: Record<st
           <GraduationCap className="h-4 w-4 text-primary" /> Project information
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Used on your cover page and in every export.</p>
-        <div className="mt-4 space-y-3">
-          {fields.map(([k, label, ph]) => (
-            <label key={k} className="block">
-              <span className="text-xs font-medium text-muted-foreground">{label}</span>
-              <input
-                value={form[k]}
-                onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
-                placeholder={ph}
-                className="mt-1 min-h-12 w-full rounded-2xl border bg-background px-4 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </label>
-          ))}
+        <div className="mt-4">
+          <ProjectDetailsFields value={form} onChange={setForm} />
         </div>
         <button
           onClick={() => { tap(); m.mutate(); }}
@@ -627,6 +654,7 @@ function ProjectInfo({ paperId, project }: { paperId: string; project: Record<st
     </div>
   );
 }
+
 
 function TextStep({
   paperId, step, value, paid, online, onSaved,

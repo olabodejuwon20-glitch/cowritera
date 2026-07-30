@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { useRedirectWhenAuthed } from "@/lib/auth";
 import { GraduationCap, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/register")({
 });
 
 function RegisterPage() {
+  useRedirectWhenAuthed("/dashboard");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

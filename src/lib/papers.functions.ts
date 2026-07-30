@@ -5,6 +5,7 @@ import { z } from "zod";
 const CreateInput = z.object({
   topic: z.string().min(4).max(400),
   course_code: z.string().min(1).max(40),
+  details: z.record(z.string(), z.any()).optional(),
 });
 
 const IdInput = z.object({ id: z.string().uuid() });
@@ -26,7 +27,7 @@ export const createPaper = createServerFn({ method: "POST" })
         user_id: userId,
         topic: data.topic,
         course_code: data.course_code,
-        project: { topic: data.topic, course_code: data.course_code },
+        project: { ...(data.details ?? {}), topic: data.topic, course_code: data.course_code },
         sections: {},
         status: "draft",
         paid: false,
