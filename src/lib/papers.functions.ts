@@ -27,7 +27,7 @@ export const createPaper = createServerFn({ method: "POST" })
         user_id: userId,
         topic: data.topic,
         course_code: data.course_code,
-        project: { topic: data.topic, course_code: data.course_code },
+        project: { ...(data.details ?? {}), topic: data.topic, course_code: data.course_code },
         sections: {},
         status: "draft",
         paid: false,
