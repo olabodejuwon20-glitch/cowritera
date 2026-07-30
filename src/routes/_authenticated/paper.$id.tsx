@@ -212,19 +212,22 @@ function PaperPage() {
   return (
     <WorkspaceShell
       fill
+      focus
       title={paper.topic || "Untitled paper"}
       status={`${paper.course_code} · ${done}/${TRACKED.length} sections`}
       headerActions={
         <button
           aria-label="More actions"
           onClick={() => { tap(); setMoreSheet(true); }}
-          className="grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft"
+          className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft"
         >
           <MoreHorizontal className="h-5 w-5" />
         </button>
       }
     >
-      <div className="shrink-0 border-b bg-card px-4 py-3 sm:px-6">
+      {/* Desktop context bar — hidden on mobile Focus Mode */}
+      <div className="hidden shrink-0 border-b bg-card px-4 py-3 sm:block sm:px-6">
+
         <Breadcrumbs
           items={[
             { label: "Home", to: "/dashboard" },
