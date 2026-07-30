@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { buildDocx } from "@/lib/paper-export";
+import { parseExportRequest } from "@/lib/export-validation";
 import type { PaperDraft } from "@/lib/paper-draft";
 
 async function respond(draft?: Partial<PaperDraft>) {
@@ -17,9 +18,11 @@ export const Route = createFileRoute("/api/export/docx")({
     handlers: {
       GET: async () => respond(),
       POST: async ({ request }) => {
-        let draft: Partial<PaperDraft> | undefined;
-        try { draft = (await request.json()) as Partial<PaperDraft>; } catch { /* noop */ }
-        return respond(draft);
+        const result = await parseExportRequest(request);
+        if (!result.ok) {
+          return new Response(result.message, { status: result.status });
+        }
+        return respond(result.draft);
       },
     },
   },
