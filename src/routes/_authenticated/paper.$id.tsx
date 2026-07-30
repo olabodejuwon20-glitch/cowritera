@@ -377,8 +377,58 @@ function SheetRow({ icon: Icon, label, onClick }: { icon: typeof Menu; label: st
 }
 
 /* ------------------------------------------------------------------ */
+/* Cover page                                                          */
+/* ------------------------------------------------------------------ */
+
+function CoverPage({
+  topic, project, content,
+}: { topic: string; project: Record<string, unknown>; content: string }) {
+  const d = detailsFromProject(project);
+  const members = d.members.filter((m) => m.name || m.matric);
+  const line = (v: string, cls = "") => (v ? <div className={cls}>{v}</div> : null);
+
+  return (
+    <div className="text-center leading-relaxed">
+      {line(d.institution, "font-bold uppercase")}
+      {line(d.faculty, "uppercase")}
+      {line(d.department, "uppercase")}
+      <div className="mt-8 font-bold uppercase">{topic}</div>
+      {line([d.course_code, d.course_title].filter(Boolean).join(" — "), "mt-6 uppercase")}
+      {line(d.group_name, "mt-6 font-semibold uppercase")}
+
+      {members.length > 0 && (
+        <table className="mx-auto mt-6 w-full border-collapse text-left">
+          <thead>
+            <tr>
+              <th className="border px-2 py-1 text-center">S/N</th>
+              <th className="border px-2 py-1">Name</th>
+              <th className="border px-2 py-1">Matric No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((m, i) => (
+              <tr key={i}>
+                <td className="border px-2 py-1 text-center">{i + 1}</td>
+                <td className="border px-2 py-1">{m.name}</td>
+                <td className="border px-2 py-1">{m.matric}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {line(d.lecturer_name ? `LECTURER: ${d.lecturer_name}` : "", "mt-8 uppercase")}
+      {line(d.session, "mt-2")}
+      {line(d.submission_date, "mt-2")}
+      {content ? <div className="mt-8 whitespace-pre-wrap text-left">{content}</div> : null}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Document canvas — fixed A4 page, isolated pan + pinch-zoom          */
 /* ------------------------------------------------------------------ */
+
 
 function DocView({
   step, content, topic, project,
