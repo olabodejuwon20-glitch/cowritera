@@ -5,6 +5,7 @@ import { z } from "zod";
 const CreateInput = z.object({
   topic: z.string().min(4).max(400),
   course_code: z.string().min(1).max(40),
+  details: z.record(z.string(), z.any()).optional(),
 });
 
 const IdInput = z.object({ id: z.string().uuid() });
