@@ -8,7 +8,7 @@ import {
   GraduationCap, Wand2, RefreshCw, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 
-import { AppShell, AppBar } from "@/components/app-shell";
+import { WorkspaceShell, Breadcrumbs, StatusBanner } from "@/components/workspace-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import {
@@ -148,18 +148,18 @@ function PaperPage() {
 
   if (paperQ.isLoading) {
     return (
-      <AppShell appBar={<AppBar title="Loading…" back />}>
+      <WorkspaceShell title="Loading…">
         <div className="grid h-[60vh] place-items-center text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
-      </AppShell>
+      </WorkspaceShell>
     );
   }
   if (paperQ.error || !paperQ.data) {
     return (
-      <AppShell appBar={<AppBar title="Paper" back />}>
+      <WorkspaceShell title="Paper">
         <div className="p-6 text-sm text-destructive">{(paperQ.error as Error)?.message ?? "Paper not found"}</div>
-      </AppShell>
+      </WorkspaceShell>
     );
   }
 
@@ -180,40 +180,64 @@ function PaperPage() {
   const content = sections[step.key] ?? "";
 
   return (
-    <AppShell
-      scroll={false}
-      appBar={
-        <AppBar
-          title={paper.topic || "Untitled paper"}
-          subtitle={`${paper.course_code} · ${done}/${TRACKED.length} sections`}
-          leading={
-            <button
-              aria-label="Open sections"
-              onClick={() => { tap(); setNav(true); }}
-              className="grid h-11 w-11 place-items-center rounded-full active:scale-95 active:bg-primary-soft transition"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          }
-          actions={
-            <button
-              aria-label="More actions"
-              onClick={() => { tap(); setMoreSheet(true); }}
-              className="grid h-11 w-11 place-items-center rounded-full active:scale-95 active:bg-primary-soft transition"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
-          }
-        />
+    <WorkspaceShell
+      fill
+      title={paper.topic || "Untitled paper"}
+      status={`${paper.course_code} · ${done}/${TRACKED.length} sections`}
+      headerActions={
+        <button
+          aria-label="More actions"
+          onClick={() => { tap(); setMoreSheet(true); }}
+          className="grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft"
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </button>
       }
-      className="flex flex-col [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-col"
     >
+      <div className="shrink-0 border-b bg-card px-4 py-3 sm:px-6">
+        <Breadcrumbs
+          items={[
+            { label: "Home", to: "/dashboard" },
+            { label: "My Projects", to: "/dashboard" },
+            { label: paper.topic || "Untitled paper" },
+            { label: step.label },
+          ]}
+        />
+        <div className="mt-3">
+          <StatusBanner
+            status={
+              !paid
+                ? "locked"
+                : step.tracked && (sections[step.key] ?? "").trim()
+                  ? "complete"
+                  : "draft"
+            }
+            title={step.label}
+            hint={`${pct}% of your paper complete`}
+            action={
+              <button
+                onClick={() => { tap(); setNav(true); }}
+                className="hidden shrink-0 rounded-xl border border-current/25 px-3 py-1.5 text-xs font-medium sm:inline-flex"
+              >
+                Sections
+              </button>
+            }
+          />
+        </div>
+      </div>
+
       {/* progress + step chips: fixed, never scrolls horizontally with the page */}
-      <div className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+      <div className="shrink-0 border-b bg-background/95 backdrop-blur">
         <div className="h-0.5 w-full bg-muted">
           <div className="h-full bg-primary transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 py-2">
+          <button
+            onClick={() => { tap(); setNav(true); }}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs sm:hidden"
+          >
+            Sections
+          </button>
           {STEPS.map((s, i) => {
             const complete = s.tracked && (sections[s.key] ?? "").trim().length > 0;
             return (
@@ -261,7 +285,7 @@ function PaperPage() {
 
       {/* Floating AI action for document steps */}
       {step.kind === "doc" && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 flex justify-center gap-3 px-4">
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-30 flex justify-center gap-3 px-4">
           <button
             onClick={() => { tap(); setEditSheet(true); }}
             className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-full border bg-card px-5 text-sm font-medium shadow-[var(--shadow-soft)] active:scale-95 transition"
@@ -360,7 +384,7 @@ function PaperPage() {
           />
         </div>
       </BottomSheet>
-    </AppShell>
+    </WorkspaceShell>
   );
 }
 
