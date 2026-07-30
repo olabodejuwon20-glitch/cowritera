@@ -175,13 +175,16 @@ function PaperPage() {
 
   if (paperQ.isLoading) {
     return (
-      <WorkspaceShell title="Loading…">
-        <div className="grid h-[60vh] place-items-center text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+      <WorkspaceShell title="Loading…" focus>
+        <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-6">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          <Skeleton className="h-[55vh] w-full rounded-2xl" />
         </div>
       </WorkspaceShell>
     );
   }
+
   if (paperQ.error || !paperQ.data) {
     return (
       <WorkspaceShell title="Paper">
