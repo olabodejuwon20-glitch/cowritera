@@ -286,6 +286,90 @@ function StatusStrip() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Skeleton loaders                                                    */
+/* ------------------------------------------------------------------ */
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("animate-pulse rounded-xl bg-muted", className)} />;
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)]">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <Skeleton className="mt-4 h-4 w-11/12" />
+      <Skeleton className="mt-2 h-4 w-7/12" />
+      <Skeleton className="mt-5 h-3 w-24" />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Bottom navigation (mobile)                                          */
+/* ------------------------------------------------------------------ */
+
+const TABS: { to: string; label: string; icon: typeof Home; match: (p: string) => boolean }[] = [
+  { to: "/dashboard", label: "Home", icon: Home, match: (p) => p === "/dashboard" },
+  { to: "/demo", label: "Explore", icon: Compass, match: (p) => p.startsWith("/demo") },
+  { to: "/faq", label: "Help", icon: HelpCircle, match: (p) => p.startsWith("/faq") },
+  { to: "/account", label: "You", icon: Settings, match: (p) => p.startsWith("/account") },
+];
+
+function BottomTabBar() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <nav
+      aria-label="Primary"
+      className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      <div className="px-3 pb-2">
+        <div className="relative grid h-16 grid-cols-5 items-center rounded-[26px] border bg-card/90 shadow-[var(--shadow-soft)] backdrop-blur-xl">
+          {TABS.slice(0, 2).map((t) => (
+            <Tab key={t.label} {...t} active={t.match(path)} />
+          ))}
+          <div className="relative h-full">
+            <Link
+              to={"/new" as never}
+              aria-label="New project"
+              onClick={() => tap(12)}
+              className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elegant)] transition-transform active:scale-90"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.6} />
+            </Link>
+          </div>
+          {TABS.slice(2).map((t) => (
+            <Tab key={t.label} {...t} active={t.match(path)} />
+          ))}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function Tab({
+  to, label, icon: Icon, active,
+}: { to: string; label: string; icon: typeof Home; active: boolean }) {
+  return (
+    <Link
+      to={to as never}
+      onClick={() => tap()}
+      className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 transition-transform active:scale-95"
+    >
+      <Icon
+        className={cn("h-[22px] w-[22px] transition-colors", active ? "text-primary" : "text-muted-foreground")}
+        strokeWidth={active ? 2.4 : 1.8}
+      />
+      <span className={cn("truncate text-[10px] leading-none", active ? "font-semibold text-primary" : "text-muted-foreground")}>
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Shell                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -297,7 +381,9 @@ export function WorkspaceShell({
   children,
   fill = false,
   wide = false,
+  focus = false,
 }: {
+
   title: ReactNode;
   status?: ReactNode;
   breadcrumbs?: Crumb[];
