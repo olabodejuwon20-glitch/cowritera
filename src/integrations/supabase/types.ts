@@ -140,7 +140,7 @@ export type Database = {
       }
       papers: {
         Row: {
-          course_code: string | null
+          course_code: string
           created_at: string
           id: string
           paid: boolean
@@ -152,19 +152,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          course_code?: string | null
+          course_code: string
           created_at?: string
           id?: string
           paid?: boolean
           project?: Json
           sections?: Json
           status?: string
-          topic?: string
+          topic: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          course_code?: string | null
+          course_code?: string
           created_at?: string
           id?: string
           paid?: boolean
@@ -183,6 +183,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          metadata: Json | null
           paper_id: string | null
           paystack_reference: string | null
           status: string
@@ -190,10 +191,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount_kobo?: number
+          amount_kobo: number
           created_at?: string
           currency?: string
           id?: string
+          metadata?: Json | null
           paper_id?: string | null
           paystack_reference?: string | null
           status?: string
@@ -205,6 +207,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          metadata?: Json | null
           paper_id?: string | null
           paystack_reference?: string | null
           status?: string
@@ -223,7 +226,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
           created_at: string
           department: string | null
           full_name: string | null
@@ -232,7 +234,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string
           department?: string | null
           full_name?: string | null
@@ -241,7 +242,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string
           department?: string | null
           full_name?: string | null
@@ -261,7 +261,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
@@ -290,7 +290,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -418,7 +418,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "moderator", "user"],
     },
   },
 } as const
