@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  User, LogOut, Shield, Download, Bell, BellOff, Wifi, WifiOff, Menu,
-  FileText, HelpCircle, Wallet, ChevronRight, Smartphone,
+  User, LogOut, Shield, Download, Bell, BellOff, Wifi, WifiOff,   FileText, HelpCircle, Wallet, ChevronRight, Smartphone,
 } from "lucide-react";
-import { AppShell, AppBar, MenuDrawer } from "@/components/app-shell";
+import { WorkspaceShell, Card, PageTitle } from "@/components/workspace-shell";
 import { useSession, signOut } from "@/lib/auth";
 import { amIAdmin } from "@/lib/admin.functions";
 import { listPapers } from "@/lib/papers.functions";
@@ -31,7 +30,6 @@ export const Route = createFileRoute("/_authenticated/account")({
 function AccountPage() {
   const { user } = useSession();
   const navigate = useNavigate();
-  const [menu, setMenu] = useState(false);
   const mounted = useMounted();
   const online = useOnline();
   const { canInstall, installed, install } = useInstallPrompt();
@@ -50,26 +48,15 @@ function AccountPage() {
   const paid = papers?.filter((p) => p.paid).length ?? 0;
 
   return (
-    <AppShell
-      appBar={
-        <AppBar
-          title="Account"
-          leading={
-            <button
-              aria-label="Open menu"
-              onClick={() => { tap(); setMenu(true); }}
-              className="grid h-11 w-11 place-items-center rounded-full active:scale-95 active:bg-primary-soft transition"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          }
-        />
-      }
+    <WorkspaceShell
+      title="Settings"
+      status="Account & app preferences"
+      breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "Settings" }]}
     >
-      <MenuDrawer open={menu} onOpenChange={setMenu} />
+      <PageTitle eyebrow="System" title="Settings" description="Manage your profile, install options, notifications and offline access." />
 
-      <div className="px-4 pt-4">
-        <div className="flex items-center gap-4 rounded-3xl border bg-card p-4">
+      <Card>
+        <div className="flex items-center gap-4">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground">
             {initials}
           </span>
@@ -80,7 +67,7 @@ function AccountPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* App section */}
       <Section title="App">
@@ -120,7 +107,7 @@ function AccountPage() {
         {adminData?.admin && <LinkRow to="/admin" icon={Shield} label="Admin panel" />}
       </Section>
 
-      <div className="px-4 pb-6 pt-2">
+      <div>
         <button
           onClick={async () => {
             tap();
@@ -135,13 +122,13 @@ function AccountPage() {
           <User className="mr-1 inline h-3 w-3" /> Co-Research AI · built for students
         </p>
       </div>
-    </AppShell>
+    </WorkspaceShell>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="px-4 pt-6">
+    <div>
       <h2 className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
       <div className="divide-y overflow-hidden rounded-3xl border bg-card">{children}</div>
     </div>
