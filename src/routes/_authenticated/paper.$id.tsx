@@ -11,6 +11,12 @@ import {
 import { AppShell, AppBar } from "@/components/app-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
+import {
+  ProjectDetailsFields,
+  detailsFromProject,
+  cleanDetails,
+  type ProjectDetails,
+} from "@/components/project-details-form";
 import { generateSection, researchNotes } from "@/lib/ai.functions";
 import { verifyPayment, initPayment } from "@/lib/paystack.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
@@ -384,14 +390,9 @@ function DocView({
     <div className="doc-canvas h-full px-3 py-4">
       <div className="doc-page">
         {isCover ? (
-          <div className="text-center leading-relaxed">
-            <div className="font-bold uppercase">{String(project.institution ?? "")}</div>
-            <div className="uppercase">{String(project.faculty ?? "")}</div>
-            <div className="mt-8 font-bold uppercase">{topic}</div>
-            <div className="mt-8">{String(project.group_name ?? "")}</div>
-            <div className="mt-8 whitespace-pre-wrap text-left">{content}</div>
-          </div>
+          <CoverPage topic={topic} project={project} content={content} />
         ) : (
+
           <>
             {step.heading && <div className="mb-4 text-center font-bold uppercase">{step.heading}</div>}
             {paragraphs.length ? (
