@@ -8,7 +8,7 @@ import {
   GraduationCap, Wand2, RefreshCw, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 
-import { WorkspaceShell, Breadcrumbs, StatusBanner } from "@/components/workspace-shell";
+import { WorkspaceShell, Breadcrumbs, StatusBanner, Skeleton } from "@/components/workspace-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import {
