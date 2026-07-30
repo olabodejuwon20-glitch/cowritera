@@ -575,25 +575,11 @@ function AiSheet({
 function ProjectInfo({ paperId, project }: { paperId: string; project: Record<string, unknown> }) {
   const qc = useQueryClient();
   const update = useServerFn(updateProject);
-  const [form, setForm] = useState({
-    institution: String(project.institution ?? ""),
-    faculty: String(project.faculty ?? ""),
-    department: String(project.department ?? ""),
-    group_name: String(project.group_name ?? ""),
-    lecturer_name: String(project.lecturer_name ?? ""),
-  });
+  const [form, setForm] = useState<ProjectDetails>(() => detailsFromProject(project));
   const m = useMutation({
-    mutationFn: () => update({ data: { id: paperId, project: form } }),
+    mutationFn: () => update({ data: { id: paperId, project: cleanDetails(form) } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["paper", paperId] }),
   });
-
-  const fields: [keyof typeof form, string, string][] = [
-    ["institution", "Institution", "e.g. University of Lagos"],
-    ["faculty", "Faculty", "e.g. Faculty of Science"],
-    ["department", "Department", "e.g. Computer Science"],
-    ["group_name", "Group name", "e.g. AGP 002"],
-    ["lecturer_name", "Lecturer", "Optional"],
-  ];
 
   return (
     <div className="h-full overflow-y-auto px-4 py-5">
@@ -602,18 +588,8 @@ function ProjectInfo({ paperId, project }: { paperId: string; project: Record<st
           <GraduationCap className="h-4 w-4 text-primary" /> Project information
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Used on your cover page and in every export.</p>
-        <div className="mt-4 space-y-3">
-          {fields.map(([k, label, ph]) => (
-            <label key={k} className="block">
-              <span className="text-xs font-medium text-muted-foreground">{label}</span>
-              <input
-                value={form[k]}
-                onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
-                placeholder={ph}
-                className="mt-1 min-h-12 w-full rounded-2xl border bg-background px-4 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </label>
-          ))}
+        <div className="mt-4">
+          <ProjectDetailsFields value={form} onChange={setForm} />
         </div>
         <button
           onClick={() => { tap(); m.mutate(); }}
@@ -627,6 +603,7 @@ function ProjectInfo({ paperId, project }: { paperId: string; project: Record<st
     </div>
   );
 }
+
 
 function TextStep({
   paperId, step, value, paid, online, onSaved,
