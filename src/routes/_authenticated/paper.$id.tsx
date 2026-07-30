@@ -297,8 +297,9 @@ function PaperPage() {
 
       {!paid && <Paywall id={id} />}
 
-      {/* Step body */}
-      <div className="min-h-0 flex-1">
+      {/* Step body — swipe left/right to move between sections */}
+      <div className="min-h-0 flex-1" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+
         {step.kind === "info" && <ProjectInfo paperId={id} project={project} />}
         {(step.kind === "guide" || step.kind === "analysis") && (
           <TextStep
