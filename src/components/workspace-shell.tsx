@@ -5,12 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Home, FolderKanban, FileText, Sparkles, LayoutTemplate, Compass, Wallet,
   HelpCircle, Settings, LogOut, Shield, Plus, PanelLeftClose, PanelLeft,
-  Menu, Bell, ChevronRight, WifiOff, CloudUpload, GraduationCap, X,
+  Menu, Bell, ChevronRight, ChevronLeft, WifiOff, CloudUpload, GraduationCap,
 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth";
 import { amIAdmin } from "@/lib/admin.functions";
 import { subscribeOutbox, tap } from "@/lib/offline";
 import { useOnline } from "@/lib/use-pwa";
+import { SideDrawer } from "@/components/sheets";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
