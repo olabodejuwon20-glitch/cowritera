@@ -5,12 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Home, FolderKanban, FileText, Sparkles, LayoutTemplate, Compass, Wallet,
   HelpCircle, Settings, LogOut, Shield, Plus, PanelLeftClose, PanelLeft,
-  Menu, Bell, ChevronRight, WifiOff, CloudUpload, GraduationCap, X,
+  Menu, Bell, ChevronRight, ChevronLeft, WifiOff, CloudUpload, GraduationCap,
 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth";
 import { amIAdmin } from "@/lib/admin.functions";
 import { subscribeOutbox, tap } from "@/lib/offline";
 import { useOnline } from "@/lib/use-pwa";
+import { SideDrawer } from "@/components/sheets";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -286,6 +287,90 @@ function StatusStrip() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Skeleton loaders                                                    */
+/* ------------------------------------------------------------------ */
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("animate-pulse rounded-xl bg-muted", className)} />;
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)]">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <Skeleton className="mt-4 h-4 w-11/12" />
+      <Skeleton className="mt-2 h-4 w-7/12" />
+      <Skeleton className="mt-5 h-3 w-24" />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Bottom navigation (mobile)                                          */
+/* ------------------------------------------------------------------ */
+
+const TABS: { to: string; label: string; icon: typeof Home; match: (p: string) => boolean }[] = [
+  { to: "/dashboard", label: "Home", icon: Home, match: (p) => p === "/dashboard" },
+  { to: "/demo", label: "Explore", icon: Compass, match: (p) => p.startsWith("/demo") },
+  { to: "/faq", label: "Help", icon: HelpCircle, match: (p) => p.startsWith("/faq") },
+  { to: "/account", label: "You", icon: Settings, match: (p) => p.startsWith("/account") },
+];
+
+function BottomTabBar() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <nav
+      aria-label="Primary"
+      className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      <div className="px-3 pb-2">
+        <div className="relative grid h-16 grid-cols-5 items-center rounded-[26px] border bg-card/90 shadow-[var(--shadow-soft)] backdrop-blur-xl">
+          {TABS.slice(0, 2).map((t) => (
+            <Tab key={t.label} {...t} active={t.match(path)} />
+          ))}
+          <div className="relative h-full">
+            <Link
+              to={"/new" as never}
+              aria-label="New project"
+              onClick={() => tap(12)}
+              className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elegant)] transition-transform active:scale-90"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.6} />
+            </Link>
+          </div>
+          {TABS.slice(2).map((t) => (
+            <Tab key={t.label} {...t} active={t.match(path)} />
+          ))}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function Tab({
+  to, label, icon: Icon, active,
+}: { to: string; label: string; icon: typeof Home; active: boolean }) {
+  return (
+    <Link
+      to={to as never}
+      onClick={() => tap()}
+      className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 transition-transform active:scale-95"
+    >
+      <Icon
+        className={cn("h-[22px] w-[22px] transition-colors", active ? "text-primary" : "text-muted-foreground")}
+        strokeWidth={active ? 2.4 : 1.8}
+      />
+      <span className={cn("truncate text-[10px] leading-none", active ? "font-semibold text-primary" : "text-muted-foreground")}>
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Shell                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -297,6 +382,7 @@ export function WorkspaceShell({
   children,
   fill = false,
   wide = false,
+  focus = false,
 }: {
   title: ReactNode;
   status?: ReactNode;
@@ -306,6 +392,8 @@ export function WorkspaceShell({
   /** true = content area manages its own scroll (document workspace) */
   fill?: boolean;
   wide?: boolean;
+  /** Focus Mode: hides the bottom tab bar and chrome for the document workspace */
+  focus?: boolean;
 }) {
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -314,11 +402,6 @@ export function WorkspaceShell({
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("cr-sidebar-collapsed") === "1");
-  }, []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   function toggleCollapsed() {
@@ -341,39 +424,34 @@ export function WorkspaceShell({
         <SidebarBody collapsed={collapsed} />
       </aside>
 
-      {/* Mobile drawer */}
-      {drawer && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            aria-label="Close navigation"
-            onClick={() => setDrawer(false)}
-            className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px]"
-          />
-          <div className="absolute inset-y-0 left-0 w-[84%] max-w-xs border-r bg-card pt-[env(safe-area-inset-top)] shadow-[var(--shadow-elegant)]">
-            <button
-              aria-label="Close navigation"
-              onClick={() => setDrawer(false)}
-              className="absolute right-2 top-[calc(0.5rem+env(safe-area-inset-top))] grid h-10 w-10 place-items-center rounded-full hover:bg-primary-soft"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <SidebarBody collapsed={false} onNavigate={() => setDrawer(false)} />
-          </div>
-        </div>
-      )}
+      {/* Mobile slide-out drawer (swipe-to-dismiss) */}
+      <SideDrawer open={drawer} onOpenChange={setDrawer}>
+        <SidebarBody collapsed={false} onNavigate={() => setDrawer(false)} />
+      </SideDrawer>
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 shrink-0 border-b bg-card/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-          <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-5">
+          <div className="grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 sm:h-16 sm:gap-3 sm:px-5">
             <div className="flex items-center gap-1">
-              <button
-                aria-label="Open navigation"
-                onClick={() => { tap(); setDrawer(true); }}
-                className="grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft md:hidden"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+              {focus ? (
+                <Link
+                  to={"/dashboard" as never}
+                  aria-label="Back to projects"
+                  onClick={() => tap()}
+                  className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft md:hidden"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Link>
+              ) : (
+                <button
+                  aria-label="Open navigation"
+                  onClick={() => { tap(); setDrawer(true); }}
+                  className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              )}
               <button
                 aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 onClick={toggleCollapsed}
@@ -383,26 +461,30 @@ export function WorkspaceShell({
               </button>
             </div>
 
-            <div className="min-w-0">
+            <div className={cn("min-w-0", focus && "text-center md:text-left")}>
               <div className="truncate text-[15px] font-semibold leading-tight sm:text-base">{title}</div>
               {status && <div className="truncate text-[11px] text-muted-foreground">{status}</div>}
             </div>
 
             <div className="flex items-center gap-1">
               {headerActions}
-              <button
-                aria-label="Notifications"
-                className="relative grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
-              <Link
-                to={"/account" as never}
-                aria-label="Profile"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
-              >
-                {initials}
-              </Link>
+              {!focus && (
+                <button
+                  aria-label="Notifications"
+                  className="relative hidden h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft sm:grid"
+                >
+                  <Bell className="h-5 w-5" />
+                </button>
+              )}
+              {!focus && (
+                <Link
+                  to={"/account" as never}
+                  aria-label="Profile"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
+                >
+                  {initials}
+                </Link>
+              )}
             </div>
           </div>
           <StatusStrip />
@@ -412,9 +494,15 @@ export function WorkspaceShell({
           <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
         ) : (
           <main className="flex-1 overflow-y-auto overscroll-y-contain">
-            <div className={cn("page-enter mx-auto w-full px-4 py-6 sm:px-8 sm:py-8", wide ? "max-w-7xl" : "max-w-5xl")}>
+            <div
+              className={cn(
+                "page-enter mx-auto w-full px-4 py-6 sm:px-8 sm:py-8",
+                wide ? "max-w-7xl" : "max-w-5xl",
+                !focus && "pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8",
+              )}
+            >
               {breadcrumbs && (
-                <div className="mb-4">
+                <div className="mb-4 hidden sm:block">
                   <Breadcrumbs items={breadcrumbs} />
                 </div>
               )}
@@ -423,8 +511,11 @@ export function WorkspaceShell({
           </main>
         )}
       </div>
+
+      {!focus && <BottomTabBar />}
     </div>
   );
 }
+
 
 export { FileText };

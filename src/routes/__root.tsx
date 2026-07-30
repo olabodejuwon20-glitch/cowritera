@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerPWA } from "../lib/pwa";
 import { setupOfflineCache } from "../lib/offline-cache";
+import { Toaster } from "@/components/ui/sonner";
 
 
 
@@ -146,6 +147,8 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-center" richColors closeButton={false} />
     </QueryClientProvider>
   );
 }
+

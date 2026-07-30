@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { WorkspaceShell, Card, PageTitle, ActionButton } from "@/components/workspace-shell";
+import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
-import { Plus, FileText, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -52,11 +52,14 @@ function Dashboard() {
       </div>
 
       {isLoading && (
-        <Card className="grid place-items-center py-14 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-        </Card>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <li key={i}><CardSkeleton /></li>
+          ))}
+        </ul>
       )}
       {error && <Card className="text-sm text-destructive">{(error as Error).message}</Card>}
+
 
       {data && data.length === 0 && (
         <Card className="border-dashed py-14 text-center shadow-none">

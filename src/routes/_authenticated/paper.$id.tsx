@@ -1,5 +1,6 @@
 import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -8,7 +9,7 @@ import {
   GraduationCap, Wand2, RefreshCw, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 
-import { WorkspaceShell, Breadcrumbs, StatusBanner } from "@/components/workspace-shell";
+import { WorkspaceShell, Breadcrumbs, StatusBanner, Skeleton } from "@/components/workspace-shell";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import {
@@ -110,6 +111,33 @@ function PaperPage() {
     if (paperQ.data) setLastPaper(id, (paperQ.data as { topic?: string }).topic);
   }, [paperQ.data, id]);
 
+  // Restore the last-open section for this paper between sessions.
+  useEffect(() => {
+    const saved = Number(localStorage.getItem(`coresearch.step.${id}`));
+    if (Number.isFinite(saved) && saved > 0 && saved < STEPS.length) setStepIndex(saved);
+  }, [id]);
+  useEffect(() => {
+    localStorage.setItem(`coresearch.step.${id}`, String(stepIndex));
+  }, [id, stepIndex]);
+
+  // Horizontal swipe between sections (ignored inside the zoomable document canvas).
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: ReactTouchEvent) => {
+    if (e.touches.length !== 1) return (touch.current = null);
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e: ReactTouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    tap();
+    setStepIndex((i) => Math.min(STEPS.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1))));
+  };
+
+
   // Background sync: flush queued offline edits whenever we come back online.
   const sendPending = useCallback(
     (item: PendingSave) => save({ data: { id: item.paper_id, section_key: item.section_key, content: item.content } }),
@@ -148,13 +176,16 @@ function PaperPage() {
 
   if (paperQ.isLoading) {
     return (
-      <WorkspaceShell title="Loading…">
-        <div className="grid h-[60vh] place-items-center text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+      <WorkspaceShell title="Loading…" focus>
+        <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-6">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          <Skeleton className="h-[55vh] w-full rounded-2xl" />
         </div>
       </WorkspaceShell>
     );
   }
+
   if (paperQ.error || !paperQ.data) {
     return (
       <WorkspaceShell title="Paper">
@@ -182,19 +213,22 @@ function PaperPage() {
   return (
     <WorkspaceShell
       fill
+      focus
       title={paper.topic || "Untitled paper"}
       status={`${paper.course_code} · ${done}/${TRACKED.length} sections`}
       headerActions={
         <button
           aria-label="More actions"
           onClick={() => { tap(); setMoreSheet(true); }}
-          className="grid h-11 w-11 place-items-center rounded-2xl hover:bg-primary-soft"
+          className="grid h-11 w-11 place-items-center rounded-2xl transition active:scale-95 active:bg-primary-soft"
         >
           <MoreHorizontal className="h-5 w-5" />
         </button>
       }
     >
-      <div className="shrink-0 border-b bg-card px-4 py-3 sm:px-6">
+      {/* Desktop context bar — hidden on mobile Focus Mode */}
+      <div className="hidden shrink-0 border-b bg-card px-4 py-3 sm:block sm:px-6">
+
         <Breadcrumbs
           items={[
             { label: "Home", to: "/dashboard" },
@@ -264,8 +298,13 @@ function PaperPage() {
 
       {!paid && <Paywall id={id} />}
 
-      {/* Step body */}
-      <div className="min-h-0 flex-1">
+      {/* Step body — swipe left/right to move between sections */}
+      <div
+        className="min-h-0 flex-1"
+        onTouchStart={step.kind === "doc" ? undefined : onTouchStart}
+        onTouchEnd={step.kind === "doc" ? undefined : onTouchEnd}
+      >
+
         {step.kind === "info" && <ProjectInfo paperId={id} project={project} />}
         {(step.kind === "guide" || step.kind === "analysis") && (
           <TextStep
@@ -501,12 +540,14 @@ function useSaver(paperId: string, sectionKey: string, online: boolean, onSaved:
       if (!online) {
         await enqueueSave({ paper_id: paperId, section_key: sectionKey, content });
         setState("queued");
+        toast("Saved on this device", { description: "It will sync when you're back online." });
         return;
       }
       setState("saving");
       try {
         await save({ data: { id: paperId, section_key: sectionKey, content } });
         setState("saved");
+        toast.success("Section saved");
         onSaved();
       } catch (e) {
         await enqueueSave({ paper_id: paperId, section_key: sectionKey, content });
