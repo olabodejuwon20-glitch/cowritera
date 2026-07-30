@@ -103,15 +103,6 @@ function NewPaperPage() {
           </p>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <label className="block">
-              <span className="text-sm font-medium">Course code</span>
-              <input
-                required
-                value={courseCode}
-                onChange={(e) => setCourseCode(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </label>
-            <label className="block">
               <span className="text-sm font-medium">Research topic</span>
               <textarea
                 required
@@ -123,6 +114,17 @@ function NewPaperPage() {
               />
               <span className="mt-1 block text-xs text-muted-foreground">Choose carefully — you cannot swap this for a completely different topic later.</span>
             </label>
+
+            <div className="rounded-2xl border p-3">
+              <div className="text-sm font-medium">Project & cover page details</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                These appear on your cover page and in every export. You can edit them later.
+              </p>
+              <div className="mt-3">
+                <ProjectDetailsFields value={details} onChange={setDetails} />
+              </div>
+            </div>
+
             <label className="block">
               <span className="text-sm font-medium">Have a code?</span>
               <div className="mt-1.5 flex items-center gap-2 rounded-xl border bg-background px-3">
