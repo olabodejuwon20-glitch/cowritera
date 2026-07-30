@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { AppShell, AppBar } from "@/components/app-shell";
+import { WorkspaceShell, Card, PageTitle } from "@/components/workspace-shell";
 import { createPaper } from "@/lib/papers.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { initPayment } from "@/lib/paystack.functions";
@@ -94,14 +94,18 @@ function NewPaperPage() {
   }
 
   return (
-    <AppShell appBar={<AppBar title="New paper" back />}>
-      <div className="px-4 py-5">
-        <div className="w-full rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)]">
-          <h1 className="text-xl font-semibold">Start a new paper</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            One Project Pass unlocks unlimited generation and editing for this topic. The topic locks once payment succeeds.
-          </p>
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <WorkspaceShell
+      title="New Project"
+      status="Set up your term paper"
+      breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "My Projects", to: "/dashboard" }, { label: "New Project" }]}
+    >
+      <PageTitle
+        eyebrow="Workspace"
+        title="Start a new paper"
+        description="One Project Pass unlocks unlimited generation and editing for this topic. The topic locks once payment succeeds."
+      />
+      <Card>
+          <form onSubmit={onSubmit} className="space-y-4">
             <label className="block">
               <span className="text-sm font-medium">Research topic</span>
               <textarea
@@ -153,8 +157,7 @@ function NewPaperPage() {
               Continue to payment (₦3,500)
             </button>
           </form>
-        </div>
-      </div>
-    </AppShell>
+      </Card>
+    </WorkspaceShell>
   );
 }

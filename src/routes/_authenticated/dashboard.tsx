@@ -1,11 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AppShell, AppBar, MenuDrawer } from "@/components/app-shell";
-import { useState } from "react";
-import { Menu } from "lucide-react";
+import { WorkspaceShell, Card, PageTitle, ActionButton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
-import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
+import { Plus, FileText, CheckCircle2, Clock, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -14,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       { name: "description", content: "Your Co-Research AI dashboard. See all your term paper projects." },
       { property: "og:title", content: "Your papers — Co-Research AI" },
       { property: "og:description", content: "Your Co-Research AI dashboard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboard,
@@ -22,76 +22,90 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const fetchPapers = useServerFn(listPapers);
   const navigate = useNavigate();
-  const [menu, setMenu] = useState(false);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => fetchPapers(),
-  });
+  const { data, isLoading, error } = useQuery({ queryKey: ["papers"], queryFn: () => fetchPapers() });
+
+  const total = data?.length ?? 0;
+  const unlocked = data?.filter((p) => p.paid).length ?? 0;
 
   return (
-    <AppShell
-      appBar={
-        <AppBar
-          title="Your papers"
-          subtitle="Each Project Pass unlocks one project"
-          leading={
-            <button
-              aria-label="Open menu"
-              onClick={() => setMenu(true)}
-              className="grid h-11 w-11 place-items-center rounded-full active:scale-95 active:bg-primary-soft transition"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          }
-        />
-      }
+    <WorkspaceShell
+      title="Dashboard"
+      status="Workspace overview"
+      breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "My Projects" }]}
+      wide
     >
-      <MenuDrawer open={menu} onOpenChange={setMenu} />
-      <div className="px-4 py-5">
-        <div className="mt-0">
-          {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
-          {error && <div className="text-sm text-destructive">{(error as Error).message}</div>}
-          {data && data.length === 0 && (
-            <div className="rounded-2xl border border-dashed p-10 text-center">
-              <FileText className="h-10 w-10 mx-auto text-muted-foreground/60" />
-              <h2 className="mt-3 font-medium">No papers yet</h2>
-              <p className="text-sm text-muted-foreground mt-1">Start a new project to begin writing with Co-Research AI.</p>
-              <button
-                onClick={() => navigate({ to: "/new" })}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:brightness-110"
-              >
-                <Plus className="h-4 w-4" /> Create your first paper
-              </button>
-            </div>
-          )}
-          {data && data.length > 0 && (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {data.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    to="/paper/$id"
-                    params={{ id: p.id }}
-                    className="block rounded-3xl border bg-card p-5 transition active:scale-[0.99] active:bg-primary-soft"
-                  >
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{p.course_code}</span>
-                      {p.paid ? (
-                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Paid</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Awaiting payment</span>
-                      )}
-                    </div>
-                    <h3 className="mt-2 font-medium line-clamp-2">{p.topic || "Untitled paper"}</h3>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Updated {new Date(p.updated_at).toLocaleDateString()}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <PageTitle
+        eyebrow="Workspace"
+        title="My Projects"
+        description="Every Project Pass unlocks one term paper — generation, editing and exports included."
+        actions={
+          <ActionButton icon={Plus} variant="primary" onClick={() => navigate({ to: "/new" })}>
+            New Project
+          </ActionButton>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Projects" value={total} />
+        <Stat label="Unlocked" value={unlocked} />
+        <Stat label="Awaiting payment" value={Math.max(0, total - unlocked)} />
       </div>
-    </AppShell>
+
+      {isLoading && (
+        <Card className="grid place-items-center py-14 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </Card>
+      )}
+      {error && <Card className="text-sm text-destructive">{(error as Error).message}</Card>}
+
+      {data && data.length === 0 && (
+        <Card className="border-dashed py-14 text-center shadow-none">
+          <FileText className="mx-auto h-10 w-10 text-muted-foreground/60" />
+          <h2 className="mt-3 font-medium">No projects yet</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Start a new project to begin writing with Co-Research AI.</p>
+          <div className="mt-5 flex justify-center">
+            <ActionButton icon={Plus} variant="primary" onClick={() => navigate({ to: "/new" })}>
+              Create your first project
+            </ActionButton>
+          </div>
+        </Card>
+      )}
+
+      {data && data.length > 0 && (
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {data.map((p) => (
+            <li key={p.id}>
+              <Link
+                to="/paper/$id"
+                params={{ id: p.id }}
+                className="block h-full rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-primary/30 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="rounded-full bg-primary-soft px-2.5 py-1 font-medium text-primary">{p.course_code}</span>
+                  {p.paid ? (
+                    <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Unlocked</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Awaiting payment</span>
+                  )}
+                </div>
+                <h3 className="mt-3 line-clamp-2 font-medium leading-snug">{p.topic || "Untitled paper"}</h3>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Updated {new Date(p.updated_at).toLocaleDateString()}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </WorkspaceShell>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <Card className="py-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-2xl font-semibold">{value}</div>
+    </Card>
   );
 }
