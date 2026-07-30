@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { amIAdmin } from "@/lib/admin.functions";
-import { SiteHeader } from "@/components/site-header";
+import { WorkspaceShell, Card } from "@/components/workspace-shell";
 import { LayoutDashboard, Users, FolderKanban, Wallet, Ticket, HelpCircle, Loader2, ShieldAlert } from "lucide-react";
 import { useEffect } from "react";
 
@@ -29,61 +29,56 @@ function AdminLayout() {
     if (!isLoading && data && !data.admin) navigate({ to: "/dashboard" });
   }, [isLoading, data, navigate]);
 
+  const current = NAV.find((n) => (n.exact ? location === n.to : location.startsWith(n.to)));
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <SiteHeader />
-        <div className="flex-1 grid place-items-center text-muted-foreground">
+      <WorkspaceShell title="Admin" status="Checking access">
+        <Card className="grid place-items-center py-16 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-        </div>
-      </div>
+        </Card>
+      </WorkspaceShell>
     );
   }
   if (error || !data?.admin) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <SiteHeader />
-        <div className="flex-1 grid place-items-center px-4 text-center">
-          <div className="max-w-md">
-            <ShieldAlert className="h-10 w-10 mx-auto text-muted-foreground/60" />
-            <h1 className="mt-3 text-xl font-semibold">Admin only</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You don't have admin access on this account.
-            </p>
-          </div>
-        </div>
-      </div>
+      <WorkspaceShell title="Admin" status="Restricted">
+        <Card className="py-16 text-center">
+          <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground/60" />
+          <h1 className="mt-3 text-xl font-semibold">Admin only</h1>
+          <p className="mt-1 text-sm text-muted-foreground">You don't have admin access on this account.</p>
+        </Card>
+      </WorkspaceShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface/40">
-      <SiteHeader />
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid gap-6 md:grid-cols-[220px_1fr]">
-        <aside className="md:sticky md:top-20 md:self-start rounded-2xl border bg-card p-2">
-          <div className="px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">Admin</div>
-          <nav className="flex md:flex-col gap-1 overflow-x-auto">
-            {NAV.map((n) => {
-              const active = n.exact ? location === n.to : location.startsWith(n.to);
-              return (
-                <Link
-                  key={n.to}
-                  to={n.to as any}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm whitespace-nowrap ${
-                    active ? "bg-primary text-primary-foreground" : "hover:bg-primary-soft text-foreground/80"
-                  }`}
-                >
-                  <n.icon className="h-4 w-4" />
-                  {n.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-        <div className="min-w-0">
-          <Outlet />
-        </div>
+    <WorkspaceShell
+      title="Admin panel"
+      status={current?.label ?? "Overview"}
+      breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "Admin", to: "/admin" }, { label: current?.label ?? "Overview" }]}
+      wide
+    >
+      <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto rounded-3xl border bg-card p-1.5 shadow-[var(--shadow-soft)]">
+        {NAV.map((n) => {
+          const active = n.exact ? location === n.to : location.startsWith(n.to);
+          return (
+            <Link
+              key={n.to}
+              to={n.to as any}
+              className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-2xl px-3.5 text-sm whitespace-nowrap transition ${
+                active ? "bg-primary text-primary-foreground" : "text-foreground/80 hover:bg-primary-soft"
+              }`}
+            >
+              <n.icon className="h-4 w-4" />
+              {n.label}
+            </Link>
+          );
+        })}
       </div>
-    </div>
+      <div className="min-w-0">
+        <Outlet />
+      </div>
+    </WorkspaceShell>
   );
 }
