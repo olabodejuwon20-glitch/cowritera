@@ -1,5 +1,6 @@
 import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -121,11 +122,11 @@ function PaperPage() {
 
   // Horizontal swipe between sections (ignored inside the zoomable document canvas).
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onTouchStart = (e: ReactTouchEvent) => {
     if (e.touches.length !== 1) return (touch.current = null);
     touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   };
-  const onTouchEnd = (e: React.TouchEvent) => {
+  const onTouchEnd = (e: ReactTouchEvent) => {
     const start = touch.current;
     touch.current = null;
     if (!start) return;
@@ -298,7 +299,11 @@ function PaperPage() {
       {!paid && <Paywall id={id} />}
 
       {/* Step body — swipe left/right to move between sections */}
-      <div className="min-h-0 flex-1" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div
+        className="min-h-0 flex-1"
+        onTouchStart={step.kind === "doc" ? undefined : onTouchStart}
+        onTouchEnd={step.kind === "doc" ? undefined : onTouchEnd}
+      >
 
         {step.kind === "info" && <ProjectInfo paperId={id} project={project} />}
         {(step.kind === "guide" || step.kind === "analysis") && (
@@ -535,12 +540,14 @@ function useSaver(paperId: string, sectionKey: string, online: boolean, onSaved:
       if (!online) {
         await enqueueSave({ paper_id: paperId, section_key: sectionKey, content });
         setState("queued");
+        toast("Saved on this device", { description: "It will sync when you're back online." });
         return;
       }
       setState("saving");
       try {
         await save({ data: { id: paperId, section_key: sectionKey, content } });
         setState("saved");
+        toast.success("Section saved");
         onSaved();
       } catch (e) {
         await enqueueSave({ paper_id: paperId, section_key: sectionKey, content });
