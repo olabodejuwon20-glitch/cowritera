@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminProjectsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminHelpRouteImport } from './routes/_authenticated/admin/help'
 import { Route as AuthenticatedAdminFinanceRouteImport } from './routes/_authenticated/admin/finance'
 import { Route as AuthenticatedAdminCouponsRouteImport } from './routes/_authenticated/admin/coupons'
+import { Route as AuthenticatedAdminAmbassadorsRouteImport } from './routes/_authenticated/admin/ambassadors'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -150,6 +151,12 @@ const AuthenticatedAdminCouponsRoute =
     path: '/coupons',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAmbassadorsRoute =
+  AuthenticatedAdminAmbassadorsRouteImport.update({
+    id: '/ambassadors',
+    path: '/ambassadors',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/new': typeof AuthenticatedNewRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/help': typeof AuthenticatedAdminHelpRoute
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/new': typeof AuthenticatedNewRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/admin/help': typeof AuthenticatedAdminHelpRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/new': typeof AuthenticatedNewRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
+  '/_authenticated/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
   '/_authenticated/admin/help': typeof AuthenticatedAdminHelpRoute
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/new'
     | '/invite/$token'
     | '/r/$code'
+    | '/admin/ambassadors'
     | '/admin/coupons'
     | '/admin/finance'
     | '/admin/help'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/new'
     | '/invite/$token'
     | '/r/$code'
+    | '/admin/ambassadors'
     | '/admin/coupons'
     | '/admin/finance'
     | '/admin/help'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/new'
     | '/invite/$token'
     | '/r/$code'
+    | '/_authenticated/admin/ambassadors'
     | '/_authenticated/admin/coupons'
     | '/_authenticated/admin/finance'
     | '/_authenticated/admin/help'
@@ -476,10 +489,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCouponsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/ambassadors': {
+      id: '/_authenticated/admin/ambassadors'
+      path: '/ambassadors'
+      fullPath: '/admin/ambassadors'
+      preLoaderRoute: typeof AuthenticatedAdminAmbassadorsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAmbassadorsRoute: typeof AuthenticatedAdminAmbassadorsRoute
   AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
   AuthenticatedAdminHelpRoute: typeof AuthenticatedAdminHelpRoute
@@ -490,6 +511,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAmbassadorsRoute: AuthenticatedAdminAmbassadorsRoute,
     AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
     AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
     AuthenticatedAdminHelpRoute: AuthenticatedAdminHelpRoute,

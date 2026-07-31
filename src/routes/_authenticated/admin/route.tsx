@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { amIAdmin } from "@/lib/admin.functions";
 import { WorkspaceShell, Card } from "@/components/workspace-shell";
-import { LayoutDashboard, Users, FolderKanban, Wallet, Ticket, HelpCircle, Loader2, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Users, FolderKanban, Wallet, Ticket, HelpCircle, Loader2, ShieldAlert, Megaphone } from "lucide-react";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -16,6 +16,7 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },
   { to: "/admin/finance", label: "Finance", icon: Wallet },
   { to: "/admin/coupons", label: "Coupons", icon: Ticket },
+  { to: "/admin/ambassadors", label: "Ambassadors", icon: Megaphone },
   { to: "/admin/help", label: "Help", icon: HelpCircle },
 ];
 
