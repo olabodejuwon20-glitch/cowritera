@@ -165,6 +165,10 @@ export const verifyPayment = createServerFn({ method: "POST" })
         .eq("id", data.paper_id)
         .eq("user_id", userId);
       if (error) throw new Error(error.message);
+
+      // Credit an ambassador commission only after a verified payment.
+      const { creditReferralOnVerifiedPayment } = await import("./referrals.server");
+      await creditReferralOnVerifiedPayment(userId).catch(() => {});
     }
     return { paid: paidOk };
   });

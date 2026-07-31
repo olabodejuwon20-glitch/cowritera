@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
 import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
+import { useEffect } from "react";
+import { attachReferral, getAmbassadorDashboard } from "@/lib/ambassadors.functions";
+import { clearReferralCode, readReferralCode } from "@/lib/referral-code";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -23,6 +26,17 @@ function Dashboard() {
   const fetchPapers = useServerFn(listPapers);
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: ["papers"], queryFn: () => fetchPapers() });
+  const attach = useServerFn(attachReferral);
+  const ambFn = useServerFn(getAmbassadorDashboard);
+  const ambassador = useQuery({ queryKey: ["my-ambassador"], queryFn: () => ambFn() });
+
+  useEffect(() => {
+    const code = readReferralCode();
+    if (!code) return;
+    attach({ data: { code } })
+      .catch(() => {})
+      .finally(() => clearReferralCode());
+  }, [attach]);
 
   const total = data?.length ?? 0;
   const unlocked = data?.filter((p) => p.paid).length ?? 0;
@@ -44,6 +58,18 @@ function Dashboard() {
           </ActionButton>
         }
       />
+
+      {(ambassador.data as any)?.ambassador && (
+        <Link
+          to="/ambassador"
+          className="flex items-center justify-between gap-3 rounded-2xl border bg-primary-soft px-4 py-3 text-sm text-primary"
+        >
+          <span>
+            <strong>Campus Ambassador</strong> — track your referrals, commissions and campaign resources.
+          </span>
+          <span className="shrink-0 font-medium">Open →</span>
+        </Link>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Projects" value={total} />
