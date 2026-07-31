@@ -17,6 +17,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedNewRouteImport } from './routes/_authenticated/new'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -68,6 +69,11 @@ const IndexRoute = IndexRouteImport.update({
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNewRoute = AuthenticatedNewRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new': typeof AuthenticatedNewRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new': typeof AuthenticatedNewRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/new': typeof AuthenticatedNewRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/new'
+    | '/invite/$token'
     | '/r/$code'
     | '/admin/coupons'
     | '/admin/finance'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/new'
+    | '/invite/$token'
     | '/r/$code'
     | '/admin/coupons'
     | '/admin/finance'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/dashboard'
     | '/_authenticated/new'
+    | '/invite/$token'
     | '/r/$code'
     | '/_authenticated/admin/coupons'
     | '/_authenticated/admin/finance'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   RCodeRoute: typeof RCodeRoute
   ApiExportDocxRoute: typeof ApiExportDocxRoute
   ApiExportPdfRoute: typeof ApiExportPdfRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/r/$code'
       fullPath: '/r/$code'
       preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/new': {
@@ -491,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
+  InviteTokenRoute: InviteTokenRoute,
   RCodeRoute: RCodeRoute,
   ApiExportDocxRoute: ApiExportDocxRoute,
   ApiExportPdfRoute: ApiExportPdfRoute,
