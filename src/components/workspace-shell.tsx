@@ -137,17 +137,7 @@ const GROUPS: NavGroup[] = [
       { to: "/dashboard", label: "Dashboard", icon: Home, exact: true },
       { to: "/dashboard", label: "My Projects", icon: FolderKanban },
       { to: "/new", label: "New Project", icon: Plus },
-    ],
-  },
-  {
-    title: "",
-    items: [
       { to: "/demo", label: "Templates", icon: LayoutTemplate },
-    ],
-  },
-  {
-    title: "",
-    items: [
       { to: "/faq", label: "FAQ", icon: HelpCircle },
     ],
   },
@@ -156,6 +146,7 @@ const GROUPS: NavGroup[] = [
     items: [{ to: "/account", label: "Settings", icon: Settings }],
   },
 ];
+
 
 function useIsAdmin() {
   const { user } = useSession();
@@ -173,8 +164,13 @@ function SidebarBody({
   const navigate = useNavigate();
 
   const groups: NavGroup[] = isAdmin
-    ? [...GROUPS.slice(0, 3), { title: "Admin", items: [{ to: "/admin", label: "Admin panel", icon: Shield }] }, GROUPS[3]]
+    ? [
+        GROUPS[0],
+        { title: "Admin", items: [{ to: "/admin", label: "Admin panel", icon: Shield }] },
+        GROUPS[1],
+      ]
     : GROUPS;
+
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
 
@@ -191,10 +187,10 @@ function SidebarBody({
         )}
       </div>
 
-      <nav className="no-scrollbar flex-1 space-y-5 overflow-y-auto px-2 pb-4">
-        {groups.map((g) => (
-          <div key={g.title}>
-            {!collapsed && (
+      <nav className="no-scrollbar flex-1 overflow-y-auto px-2 pb-4">
+        {groups.map((g, gi) => (
+          <div key={g.title || `group-${gi}`} className={gi === 0 ? "" : "mt-5"}>
+            {!collapsed && g.title.trim() !== "" && (
               <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {g.title}
               </div>
@@ -205,6 +201,7 @@ function SidebarBody({
                 return (
                   <Link
                     key={`${g.title}-${i.label}`}
+
                     to={i.to as never}
                     onClick={() => { tap(); onNavigate?.(); }}
                     title={collapsed ? i.label : undefined}
