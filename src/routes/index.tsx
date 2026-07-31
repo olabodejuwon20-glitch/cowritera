@@ -116,7 +116,7 @@ function HeroPreview() {
 }
 
 function Logos() {
-  const items = ["FEDERAL UNIVERSITY OF TECHNOLOGY AKURE&nbsp;", "Covenant University", "UNILAG", "OAU", "ABU Zaria", "UNN"];
+  const items = ["FEDERAL UNIVERSITY OF TECHNOLOGY AKURE", "Covenant University", "UNILAG", "OAU", "ABU Zaria", "UNN"];
   return (
     <div className="border-y bg-surface/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs uppercase tracking-widest text-muted-foreground">
