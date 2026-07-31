@@ -187,10 +187,10 @@ function SidebarBody({
         )}
       </div>
 
-      <nav className="no-scrollbar flex-1 space-y-5 overflow-y-auto px-2 pb-4">
-        {groups.map((g) => (
-          <div key={g.title}>
-            {!collapsed && (
+      <nav className="no-scrollbar flex-1 overflow-y-auto px-2 pb-4">
+        {groups.map((g, gi) => (
+          <div key={g.title || `group-${gi}`} className={gi === 0 ? "" : "mt-5"}>
+            {!collapsed && g.title.trim() !== "" && (
               <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {g.title}
               </div>
@@ -201,6 +201,7 @@ function SidebarBody({
                 return (
                   <Link
                     key={`${g.title}-${i.label}`}
+
                     to={i.to as never}
                     onClick={() => { tap(); onNavigate?.(); }}
                     title={collapsed ? i.label : undefined}
