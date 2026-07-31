@@ -59,6 +59,18 @@ function Dashboard() {
         }
       />
 
+      {(ambassador.data as any)?.ambassador && (
+        <Link
+          to="/ambassador"
+          className="flex items-center justify-between gap-3 rounded-2xl border bg-primary-soft px-4 py-3 text-sm text-primary"
+        >
+          <span>
+            <strong>Campus Ambassador</strong> — track your referrals, commissions and campaign resources.
+          </span>
+          <span className="shrink-0 font-medium">Open →</span>
+        </Link>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Projects" value={total} />
         <Stat label="Unlocked" value={unlocked} />
