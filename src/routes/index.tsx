@@ -47,10 +47,10 @@ function Hero() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 pb-24 md:pt-24 md:pb-32 grid gap-12 lg:grid-cols-2 lg:items-center">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" /> Built for GNS 102 term papers
+            <Sparkles className="h-3.5 w-3.5 text-primary" />&nbsp;Built for Academic Excellence
           </span>
           <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05]">
-            Write a lecturer-compliant <span className="gradient-text">term paper</span>&nbsp;without the panic.
+            Write a Standard <span className="gradient-text">term paper</span>&nbsp;without the panic.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground max-w-xl">
             Co-Research AI turns your topic, lecturer instructions and group details into a properly formatted,
@@ -58,7 +58,7 @@ function Hero() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/demo" className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-medium shadow-[var(--shadow-elegant)] hover:brightness-110 transition">
-              Try the interactive demo <ArrowRight className="h-4 w-4" />
+              Log in <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/pricing" className="inline-flex items-center gap-2 rounded-xl border bg-background/70 px-5 py-3 font-medium hover:bg-primary-soft transition">
               See pricing
@@ -116,7 +116,7 @@ function HeroPreview() {
 }
 
 function Logos() {
-  const items = ["University of Ibadan", "Covenant University", "UNILAG", "OAU", "ABU Zaria", "UNN"];
+  const items = ["FEDERAL UNIVERSITY OF TECHNOLOGY AKURE&nbsp;", "Covenant University", "UNILAG", "OAU", "ABU Zaria", "UNN"];
   return (
     <div className="border-y bg-surface/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs uppercase tracking-widest text-muted-foreground">
@@ -131,18 +131,17 @@ function Philosophy() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 md:py-28">
       <div className="max-w-3xl">
-        <div className="text-xs uppercase tracking-widest text-primary font-medium">Our philosophy</div>
-        <h2 className="mt-3 text-3xl md:text-4xl font-semibold">Project-based. Not token-based.</h2>
+        <div className="text-xs uppercase tracking-widest text-primary font-medium">&nbsp;</div>
+        <h2 className="mt-3 text-3xl md:text-4xl font-semibold">&nbsp;</h2>
         <p className="mt-4 text-muted-foreground text-lg">
-          You don't pay per word or per generation. You buy access to a single academic project — then iterate as much
-          as you need until your paper is ready to submit.
+          &nbsp;
         </p>
       </div>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         {[
-          { icon: Zap, title: "No token anxiety", body: "Regenerate any section, edit endlessly, refine references. Unlimited within your project." },
-          { icon: ShieldCheck, title: "Lecturer-compliant", body: "Uploaded lecturer guides become mandatory rules — enforced before you export." },
-          { icon: Layers, title: "Future-ready", body: "Term papers today. Seminar papers, SIWES reports and final year projects coming next." },
+          { icon: Zap, title: "&nbsp;", body: "&nbsp;" },
+          { icon: ShieldCheck, title: "\n", body: "&nbsp;" },
+          { icon: Layers, title: "&nbsp;", body: "&nbsp;" },
         ].map((f) => (
           <div key={f.title} className="rounded-2xl border p-6 bg-card hover:shadow-[var(--shadow-soft)] transition">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
@@ -188,7 +187,7 @@ function HowItWorks() {
 
 function Features() {
   const list = [
-    { icon: FileText, title: "GNS 102 cover page", body: "Auto-generated cover page with topic, group members table and the required submission line." },
+    { icon: FileText, title: "&nbsp;Cover page", body: "Auto-generated cover page with topic, group members table and the required submission line." },
     { icon: ShieldCheck, title: "Lecturer guide enforcement", body: "Formatting, required sections, page limits and citation rules — enforced automatically." },
     { icon: Wand2, title: "Section-level regeneration", body: "Regenerate just the Introduction or just the References — not the whole document." },
     { icon: BookOpen, title: "Academic references", body: "Structured references section with consistent citation formatting." },
