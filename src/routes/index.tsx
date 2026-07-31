@@ -187,7 +187,7 @@ function HowItWorks() {
 
 function Features() {
   const list = [
-    { icon: FileText, title: "&nbsp;Cover page", body: "Auto-generated cover page with topic, group members table and the required submission line." },
+    { icon: FileText, title: "Cover page", body: "Auto-generated cover page with topic, group members table and the required submission line." },
     { icon: ShieldCheck, title: "Lecturer guide enforcement", body: "Formatting, required sections, page limits and citation rules — enforced automatically." },
     { icon: Wand2, title: "Section-level regeneration", body: "Regenerate just the Introduction or just the References — not the whole document." },
     { icon: BookOpen, title: "Academic references", body: "Structured references section with consistent citation formatting." },
