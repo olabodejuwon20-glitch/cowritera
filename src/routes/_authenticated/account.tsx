@@ -93,11 +93,6 @@ function AccountPage() {
               : async () => setPerm(await requestNotifications())
           }
         />
-        <Row
-          icon={online ? Wifi : WifiOff}
-          label="Offline access"
-          hint={online ? "Online — your papers are cached for offline reading" : "Offline — showing cached content"}
-        />
       </Section>
 
       <Section title="Workspace">
