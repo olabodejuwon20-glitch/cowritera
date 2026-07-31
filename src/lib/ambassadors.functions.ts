@@ -1,36 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { z } from "zod";
-
-async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data, error } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin only");
-}
-
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function randomCode(len: number) {
-  const bytes = new Uint8Array(len);
-  crypto.getRandomValues(bytes);
-  let out = "";
-  for (const b of bytes) out += CODE_ALPHABET[b % CODE_ALPHABET.length];
-  return out;
-}
-
-function randomToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
+import {
+  assertAdmin,
+  randomCode,
+  randomToken,
+  withSignedUrls,
+  CodeInput,
+  IdInput,
+  TokenInput,
+  CampaignInput,
+  InviteInput,
+  PayoutInput,
+  AnnouncementInput,
+  ResourceInput,
+} from "./ambassadors.shared";
 
 /* ------------------------------- public ---------------------------------- */
 
 export const trackReferralClick = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(20) }).parse(d))
+  .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const code = data.code.trim().toUpperCase();
@@ -48,7 +36,7 @@ export const trackReferralClick = createServerFn({ method: "POST" })
 
 export const attachReferral = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(20) }).parse(d))
+  .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const code = data.code.trim().toUpperCase();
@@ -80,7 +68,7 @@ export const attachReferral = createServerFn({ method: "POST" })
 
 export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ token: z.string().min(10).max(120) }).parse(d))
+  .inputValidator((d: unknown) => TokenInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = String((context.claims as any)?.email ?? "").toLowerCase();
@@ -116,7 +104,7 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
           referral_code: candidate,
         });
         if (!error) referral_code = candidate;
-        else if (!String(error.message).includes("duplicate")) throw new Error(error.message);
+        else if (!String(error.message).toLowerCase().includes("duplicate")) throw new Error(error.message);
       }
       if (!referral_code) throw new Error("Could not generate a referral code. Please try again.");
     }
@@ -146,7 +134,7 @@ export const getAmbassadorDashboard = createServerFn({ method: "GET" })
       .select("*")
       .eq("user_id", context.userId)
       .maybeSingle();
-    if (!amb) return { ambassador: null as null };
+    if (!amb) return { ambassador: null };
 
     const [campaignRes, clicksRes, referralsRes, payoutsRes, annRes, resRes] = await Promise.all([
       amb.campaign_id
@@ -178,24 +166,25 @@ export const getAmbassadorDashboard = createServerFn({ method: "GET" })
         .limit(60),
     ]);
 
-    const referrals = (referralsRes as any).data ?? [];
-    const payouts = (payoutsRes as any).data ?? [];
-    const paidReferrals = referrals.filter((r: any) => r.status === "paid");
-    const totalEarnedKobo = paidReferrals.reduce((s: number, r: any) => s + Number(r.commission_kobo ?? 0), 0);
+    const referrals = ((referralsRes as any).data ?? []) as any[];
+    const payouts = ((payoutsRes as any).data ?? []) as any[];
+    const paidReferrals = referrals.filter((r) => r.status === "paid");
+    const totalEarnedKobo = paidReferrals.reduce((s, r) => s + Number(r.commission_kobo ?? 0), 0);
     const totalPaidOutKobo = payouts
-      .filter((p: any) => p.status === "paid")
-      .reduce((s: number, p: any) => s + Number(p.amount_kobo ?? 0), 0);
-
-    const resources = await withSignedUrls((resRes as any).data ?? []);
+      .filter((p) => p.status === "paid")
+      .reduce((s, p) => s + Number(p.amount_kobo ?? 0), 0);
 
     const campaignId = amb.campaign_id;
-    const announcements = ((annRes as any).data ?? []).filter(
-      (a: any) => !a.campaign_id || a.campaign_id === campaignId,
+    const resources = (await withSignedUrls(((resRes as any).data ?? []) as any[])).filter(
+      (r: any) => !r.campaign_id || r.campaign_id === campaignId,
+    );
+    const announcements = (((annRes as any).data ?? []) as any[]).filter(
+      (a) => !a.campaign_id || a.campaign_id === campaignId,
     );
 
     return {
       ambassador: amb,
-      campaign: (campaignRes as any).data ?? null,
+      campaign: ((campaignRes as any).data ?? null) as any,
       clicks: (clicksRes as any).count ?? 0,
       registrations: referrals.length,
       paidReferrals: paidReferrals.length,
@@ -205,35 +194,11 @@ export const getAmbassadorDashboard = createServerFn({ method: "GET" })
       referrals,
       payouts,
       announcements,
-      resources: resources.filter((r: any) => !r.campaign_id || r.campaign_id === campaignId),
+      resources,
     };
   });
 
-async function withSignedUrls(rows: any[]) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return Promise.all(
-    rows.map(async (r) => {
-      if (!r.storage_path) return r;
-      const { data } = await supabaseAdmin.storage
-        .from("marketing-assets")
-        .createSignedUrl(r.storage_path, 60 * 60 * 6);
-      return { ...r, signed_url: data?.signedUrl ?? null };
-    }),
-  );
-}
-
 /* --------------------------------- admin ---------------------------------- */
-
-const CampaignInput = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(2).max(120),
-  description: z.string().max(2000).nullable().optional(),
-  starts_at: z.string().min(4),
-  ends_at: z.string().min(4).nullable().optional(),
-  commission_kobo: z.number().int().min(0).max(100_000_000),
-  status: z.enum(["draft", "active", "paused", "ended"]),
-  eligibility: z.string().max(2000).nullable().optional(),
-});
 
 export const adminListCampaigns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -273,19 +238,12 @@ export const adminSaveCampaign = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { ok: true, id: row.id };
+    return { ok: true, id: (row as any).id as string };
   });
 
 export const adminInviteAmbassador = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        email: z.string().trim().email().max(255),
-        campaign_id: z.string().uuid().nullable().optional(),
-      })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => InviteInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const token = randomToken();
@@ -314,7 +272,7 @@ export const adminListInvites = createServerFn({ method: "GET" })
 
 export const adminRevokeInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase
@@ -336,34 +294,34 @@ export const adminListAmbassadors = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(300);
     if (error) throw new Error(error.message);
-    const list = rows ?? [];
-    if (list.length === 0) return [];
+    const list = (rows ?? []) as any[];
+    if (list.length === 0) return [] as any[];
 
-    const ids = list.map((a: any) => a.id);
+    const ids = list.map((a) => a.id);
     const [refs, payouts, profiles, users] = await Promise.all([
       supabaseAdmin.from("referrals").select("ambassador_id, status, commission_kobo").in("ambassador_id", ids),
       supabaseAdmin.from("ambassador_payouts").select("ambassador_id, amount_kobo, status").in("ambassador_id", ids),
-      supabaseAdmin.from("profiles").select("id, full_name").in("id", list.map((a: any) => a.user_id)),
+      supabaseAdmin.from("profiles").select("id, full_name").in("id", list.map((a) => a.user_id)),
       supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 500 }),
     ]);
     const emailById = new Map<string, string>();
     for (const u of users?.data?.users ?? []) emailById.set(u.id, u.email ?? "");
-    const nameById = new Map((profiles.data ?? []).map((p: any) => [p.id, p.full_name]));
+    const nameById = new Map(((profiles.data ?? []) as any[]).map((p) => [p.id, p.full_name]));
 
-    return list.map((a: any) => {
-      const mine = (refs.data ?? []).filter((r: any) => r.ambassador_id === a.id);
+    return list.map((a) => {
+      const mine = ((refs.data ?? []) as any[]).filter((r) => r.ambassador_id === a.id);
       const earned = mine
-        .filter((r: any) => r.status === "paid")
-        .reduce((s: number, r: any) => s + Number(r.commission_kobo ?? 0), 0);
-      const paidOut = (payouts.data ?? [])
-        .filter((p: any) => p.ambassador_id === a.id && p.status === "paid")
-        .reduce((s: number, p: any) => s + Number(p.amount_kobo ?? 0), 0);
+        .filter((r) => r.status === "paid")
+        .reduce((s, r) => s + Number(r.commission_kobo ?? 0), 0);
+      const paidOut = ((payouts.data ?? []) as any[])
+        .filter((p) => p.ambassador_id === a.id && p.status === "paid")
+        .reduce((s, p) => s + Number(p.amount_kobo ?? 0), 0);
       return {
         ...a,
         name: nameById.get(a.user_id) || "Unnamed",
         email: emailById.get(a.user_id) ?? "",
         registrations: mine.length,
-        paid_referrals: mine.filter((r: any) => r.status === "paid").length,
+        paid_referrals: mine.filter((r) => r.status === "paid").length,
         earned_kobo: earned,
         paid_out_kobo: paidOut,
         pending_kobo: Math.max(0, earned - paidOut),
@@ -373,15 +331,7 @@ export const adminListAmbassadors = createServerFn({ method: "GET" })
 
 export const adminRecordPayout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        ambassador_id: z.string().uuid(),
-        amount_kobo: z.number().int().min(100).max(100_000_000),
-        note: z.string().max(300).nullable().optional(),
-      })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => PayoutInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("ambassador_payouts").insert({
@@ -396,15 +346,7 @@ export const adminRecordPayout = createServerFn({ method: "POST" })
 
 export const adminCreateAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        campaign_id: z.string().uuid().nullable().optional(),
-        title: z.string().min(2).max(160),
-        body: z.string().min(2).max(4000),
-      })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => AnnouncementInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("campaign_announcements").insert({
@@ -432,7 +374,7 @@ export const adminListAnnouncements = createServerFn({ method: "GET" })
 
 export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("campaign_announcements").delete().eq("id", data.id);
@@ -442,18 +384,7 @@ export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
 
 export const adminSaveResource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        campaign_id: z.string().uuid().nullable().optional(),
-        title: z.string().min(2).max(160),
-        kind: z.enum(["flyer", "whatsapp", "video", "asset", "link"]),
-        body: z.string().max(4000).nullable().optional(),
-        url: z.string().url().max(1000).nullable().optional(),
-        storage_path: z.string().max(400).nullable().optional(),
-      })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => ResourceInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("marketing_resources").insert({
@@ -479,12 +410,12 @@ export const adminListResources = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    return withSignedUrls(data ?? []);
+    return withSignedUrls((data ?? []) as any[]);
   });
 
 export const adminDeleteResource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("marketing_resources").delete().eq("id", data.id);
