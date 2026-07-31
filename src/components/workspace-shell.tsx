@@ -164,8 +164,13 @@ function SidebarBody({
   const navigate = useNavigate();
 
   const groups: NavGroup[] = isAdmin
-    ? [...GROUPS.slice(0, 3), { title: "Admin", items: [{ to: "/admin", label: "Admin panel", icon: Shield }] }, GROUPS[3]]
+    ? [
+        GROUPS[0],
+        { title: "Admin", items: [{ to: "/admin", label: "Admin panel", icon: Shield }] },
+        GROUPS[1],
+      ]
     : GROUPS;
+
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
 
