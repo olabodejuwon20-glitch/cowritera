@@ -27,10 +27,8 @@ function Dashboard() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: ["papers"], queryFn: () => fetchPapers() });
   const attach = useServerFn(attachReferral);
-  const ambassador = useQuery({
-    queryKey: ["my-ambassador"],
-    queryFn: () => useServerFnResult(),
-  });
+  const ambFn = useServerFn(getAmbassadorDashboard);
+  const ambassador = useQuery({ queryKey: ["my-ambassador"], queryFn: () => ambFn() });
 
   useEffect(() => {
     const code = readReferralCode();
