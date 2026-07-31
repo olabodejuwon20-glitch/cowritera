@@ -137,17 +137,7 @@ const GROUPS: NavGroup[] = [
       { to: "/dashboard", label: "Dashboard", icon: Home, exact: true },
       { to: "/dashboard", label: "My Projects", icon: FolderKanban },
       { to: "/new", label: "New Project", icon: Plus },
-    ],
-  },
-  {
-    title: "",
-    items: [
       { to: "/demo", label: "Templates", icon: LayoutTemplate },
-    ],
-  },
-  {
-    title: "",
-    items: [
       { to: "/faq", label: "FAQ", icon: HelpCircle },
     ],
   },
@@ -156,6 +146,7 @@ const GROUPS: NavGroup[] = [
     items: [{ to: "/account", label: "Settings", icon: Settings }],
   },
 ];
+
 
 function useIsAdmin() {
   const { user } = useSession();
