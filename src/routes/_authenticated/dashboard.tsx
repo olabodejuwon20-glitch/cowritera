@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
 import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
+import { useEffect } from "react";
+import { attachReferral, getAmbassadorDashboard } from "@/lib/ambassadors.functions";
+import { clearReferralCode, readReferralCode } from "@/lib/referral-code";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -23,6 +26,19 @@ function Dashboard() {
   const fetchPapers = useServerFn(listPapers);
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({ queryKey: ["papers"], queryFn: () => fetchPapers() });
+  const attach = useServerFn(attachReferral);
+  const ambassador = useQuery({
+    queryKey: ["my-ambassador"],
+    queryFn: () => useServerFnResult(),
+  });
+
+  useEffect(() => {
+    const code = readReferralCode();
+    if (!code) return;
+    attach({ data: { code } })
+      .catch(() => {})
+      .finally(() => clearReferralCode());
+  }, [attach]);
 
   const total = data?.length ?? 0;
   const unlocked = data?.filter((p) => p.paid).length ?? 0;
