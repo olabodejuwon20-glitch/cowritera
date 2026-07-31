@@ -140,17 +140,14 @@ const GROUPS: NavGroup[] = [
     ],
   },
   {
-    title: "AI",
+    title: "",
     items: [
-      { to: "/demo", label: "AI Writer", icon: Sparkles },
       { to: "/demo", label: "Templates", icon: LayoutTemplate },
     ],
   },
   {
-    title: "Resources",
+    title: "",
     items: [
-      { to: "/demo", label: "Interactive Demo", icon: Compass },
-      { to: "/pricing", label: "Pricing", icon: Wallet },
       { to: "/faq", label: "FAQ", icon: HelpCircle },
     ],
   },
