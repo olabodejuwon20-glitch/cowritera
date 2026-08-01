@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { SampleExportLinks } from "@/components/sample-export";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Co-Research AI" },
-      { name: "description", content: "One-time ₦3,500 Project Pass. Unlimited edits, unlimited regeneration, Word & PDF export. Free interactive demo." },
+      { name: "description", content: "One-time ₦3,500 Project Pass. Unlimited edits, unlimited regeneration, Word & PDF export. Free downloadable sample." },
       { property: "og:title", content: "Pricing — Co-Research AI" },
       { property: "og:description", content: "One-time Project Pass. No token limits. Unlimited edits and exports." },
     ],
@@ -29,10 +30,10 @@ const passFeatures = [
 ];
 
 const demoFeatures = [
-  "Full pre-generated example project",
-  "Explore every section and sidebar",
-  "Preview cover page, tables and references",
-  "See what a submission-ready paper looks like",
+  "Full example term paper, instantly downloaded",
+  "Word (.docx) and PDF formats",
+  "Cover page, members table and references included",
+  "Times New Roman 12pt, 1-inch margins",
 ];
 
 function PricingPage() {
@@ -54,11 +55,11 @@ function PricingPage() {
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16">
           <div className="grid gap-6 md:grid-cols-2">
             <PlanCard
-              title="Interactive Demo"
+              title="Free sample"
               price="Free"
-              subtitle="Explore Co-Research AI without signing up."
+              subtitle="See the exact export before you pay."
               features={demoFeatures}
-              cta={<Link to="/demo" className="mt-8 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm hover:bg-primary-soft">Open demo <ArrowRight className="h-4 w-4" /></Link>}
+              cta={<SampleExportLinks className="mt-8" />}
             />
             <PlanCard
               highlight

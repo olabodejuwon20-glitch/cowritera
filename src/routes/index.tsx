@@ -4,6 +4,7 @@ import {
   ArrowRight, Check, GraduationCap, Layers, Zap,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { SampleExportButtons, SampleExportLinks } from "@/components/sample-export";
 import { useRedirectWhenAuthed } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
@@ -29,7 +30,6 @@ function Landing() {
       <main className="flex-1">
         <Hero />
         <Logos />
-        <Philosophy />
         <HowItWorks />
         <Features />
         <PricingTeaser />
@@ -57,7 +57,7 @@ function Hero() {
             submission-ready term paper. One project pass. Unlimited iterations.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/demo" className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-medium shadow-[var(--shadow-elegant)] hover:brightness-110 transition">
+            <Link to="/login" className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 font-medium shadow-[var(--shadow-elegant)] hover:brightness-110 transition">
               Log in <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/pricing" className="inline-flex items-center gap-2 rounded-xl border bg-background/70 px-5 py-3 font-medium hover:bg-primary-soft transition">
@@ -127,35 +127,6 @@ function Logos() {
   );
 }
 
-function Philosophy() {
-  return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 md:py-28">
-      <div className="max-w-3xl">
-        <div className="text-xs uppercase tracking-widest text-primary font-medium">&nbsp;</div>
-        <h2 className="mt-3 text-3xl md:text-4xl font-semibold">&nbsp;</h2>
-        <p className="mt-4 text-muted-foreground text-lg">
-          &nbsp;
-        </p>
-      </div>
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        {[
-          { icon: Zap, title: "&nbsp;", body: "&nbsp;" },
-          { icon: ShieldCheck, title: "\n", body: "&nbsp;" },
-          { icon: Layers, title: "&nbsp;", body: "&nbsp;" },
-        ].map((f) => (
-          <div key={f.title} className="rounded-2xl border p-6 bg-card hover:shadow-[var(--shadow-soft)] transition">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
-              <f.icon className="h-5 w-5" />
-            </span>
-            <h3 className="mt-4 font-semibold">{f.title}</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function HowItWorks() {
   const steps = [
     { icon: BookOpen, title: "Describe your paper", body: "Topic, lecturer, group members, course and any lecturer instructions." },
@@ -220,17 +191,15 @@ function PricingTeaser() {
         <div className="text-xs uppercase tracking-widest text-primary font-medium">Simple pricing</div>
         <h2 className="mt-3 text-3xl md:text-4xl font-semibold">One project. One flat fee. Zero surprises.</h2>
         <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-          Try the platform for free with our interactive demo. When you're ready to build your own paper, unlock a
+          Download a free sample paper to see the exact output. When you're ready to build your own paper, unlock a
           Project Pass — a one-time payment with unlimited iteration.
         </p>
         <div className="mt-10 grid gap-6 md:grid-cols-2 text-left">
           <div className="rounded-2xl border bg-card p-6">
-            <div className="text-sm text-muted-foreground">Interactive Demo</div>
+            <div className="text-sm text-muted-foreground">Free sample</div>
             <div className="mt-2 text-3xl font-semibold">Free</div>
-            <p className="mt-2 text-sm text-muted-foreground">Explore a fully pre-generated example project — cover page, sections, references and export previews.</p>
-            <Link to="/demo" className="mt-6 inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm hover:bg-primary-soft">
-              Open demo <ArrowRight className="h-4 w-4" />
-            </Link>
+            <p className="mt-2 text-sm text-muted-foreground">Download a fully formatted example term paper — cover page, members table, sections and references.</p>
+            <SampleExportLinks className="mt-6" />
           </div>
           <div className="relative rounded-2xl border-2 border-primary bg-card p-6 shadow-[var(--shadow-elegant)]">
             <span className="absolute -top-3 left-6 text-xs font-semibold text-primary-foreground bg-primary rounded-full px-2 py-0.5">Recommended</span>
@@ -264,10 +233,10 @@ function CTA() {
     <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-24">
       <div className="relative overflow-hidden rounded-3xl border p-10 md:p-14 text-center bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-[var(--shadow-elegant)]">
         <h2 className="text-3xl md:text-4xl font-semibold">Your next term paper starts here.</h2>
-        <p className="mt-3 opacity-90 max-w-xl mx-auto">Try the interactive demo now — no signup required.</p>
-        <Link to="/demo" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-background text-foreground px-5 py-3 font-medium hover:brightness-105">
-          Launch demo <ArrowRight className="h-4 w-4" />
-        </Link>
+        <p className="mt-3 opacity-90 max-w-xl mx-auto">Download a free sample paper — no signup required.</p>
+        <div className="mt-6 flex justify-center">
+          <SampleExportButtons variant="inverse" />
+        </div>
       </div>
     </section>
   );
