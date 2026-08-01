@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { WorkspaceShell, Card, PageTitle, CardSkeleton } from "@/components/workspace-shell";
 import { getAmbassadorDashboard } from "@/lib/ambassadors.functions";
 import { nairaFromKobo } from "@/lib/ambassadors.shared";
+import { ShareSheet, type ShareTarget } from "@/components/share-sheet";
 import {
   Megaphone, Copy, Share2, MousePointerClick, UserPlus, BadgeCheck, Wallet,
   Clock, FileText, MessageCircle, Video, Link2, Download, Sparkles,
@@ -49,6 +50,7 @@ function AmbassadorPage() {
   const amb: any = data?.ambassador ?? null;
   const campaign: any = (data as any)?.campaign ?? null;
   const countdown = useCountdown(campaign?.ends_at);
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
 
   const referralUrl = useMemo(() => {
     if (!amb) return "";
@@ -65,17 +67,13 @@ function AmbassadorPage() {
     }
   }
 
-  async function share() {
-    const text = `Write your term paper 10x faster with Co-Research AI. Use my link: ${referralUrl}`;
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
-      try {
-        await (navigator as any).share({ title: "Co-Research AI", text, url: referralUrl });
-        return;
-      } catch {
-        /* user cancelled */
-      }
-    }
-    copy(text, "Share message copied");
+  function share() {
+    setShareTarget({
+      title: campaign?.name ?? "Co-Research AI",
+      defaultText:
+        `Write your term paper 10x faster with Co-Research AI — lecturer-compliant structure, ` +
+        `Word & PDF export. Start with my link: {{link}}`,
+    });
   }
 
   if (isLoading) {
@@ -244,6 +242,12 @@ function AmbassadorPage() {
                         <Copy className="h-3.5 w-3.5" /> Copy message
                       </button>
                     )}
+                    <button
+                      onClick={() => setShareTarget({ title: r.title, defaultText: String(r.body || r.url || "Check out Co-Research AI") })}
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:brightness-110"
+                    >
+                      <Share2 className="h-3.5 w-3.5" /> Share
+                    </button>
                     {(r.signed_url || r.url) && (
                       <a href={r.signed_url || r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs hover:bg-surface">
                         <Download className="h-3.5 w-3.5" /> Open
@@ -302,6 +306,13 @@ function AmbassadorPage() {
           </Card>
         )}
       </section>
+
+      <ShareSheet
+        open={shareTarget !== null}
+        onClose={() => setShareTarget(null)}
+        target={shareTarget}
+        referralUrl={referralUrl}
+      />
     </WorkspaceShell>
   );
 }
