@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Home, FolderKanban, FileText, Sparkles, LayoutTemplate, Compass, Wallet,
+  Home, FolderKanban, FileText, Sparkles, Wallet,
   HelpCircle, Settings, LogOut, Shield, Plus, PanelLeftClose, PanelLeft,
   Menu, Bell, ChevronRight, ChevronLeft, WifiOff, CloudUpload, GraduationCap,
 } from "lucide-react";

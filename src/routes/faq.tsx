@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { SampleExportLinks } from "@/components/sample-export";
 
