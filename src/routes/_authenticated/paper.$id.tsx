@@ -807,11 +807,31 @@ function ExportStep({
 
   const draft = useMemo(() => {
     const toParas = (k: string) => (sections[k] ?? "").split(/\n{2,}/).filter((p) => p.trim());
+    const str = (k: string) => (project[k] == null ? undefined : String(project[k]));
+    const rawMembers = Array.isArray(project.members) ? (project.members as any[]) : [];
     return {
       topic: paper.topic,
-      submissionLine: [project.institution, project.faculty, project.department, project.group_name]
-        .filter(Boolean)
-        .join(" · "),
+      submissionLine: str("course_title")
+        ? `A term paper submitted in partial fulfilment of the requirements for ${str("course_code") ?? ""} ${str("course_title")}`.trim()
+        : "",
+      cover: {
+        institution: str("institution") ?? "",
+        faculty: str("faculty") ?? "",
+        department: str("department") ?? "",
+        courseCode: str("course_code") ?? paper.course_code,
+        courseTitle: str("course_title") ?? "",
+        groupName: str("group_name") ?? "",
+        lecturer: str("lecturer_name") ?? "",
+        session: str("session") ?? "",
+        date: str("submission_date") ?? "",
+        members: rawMembers
+          .map((m, i) => ({
+            sn: i + 1,
+            name: String((m ?? {}).name ?? ""),
+            matric: String((m ?? {}).matric ?? ""),
+          }))
+          .filter((m) => m.name || m.matric),
+      },
       introduction: toParas("introduction"),
       literature: toParas("literature"),
       methodology: toParas("methodology"),
@@ -821,7 +841,8 @@ function ExportStep({
       appendices: toParas("appendices"),
       references: toParas("references"),
     };
-  }, [paper.topic, project, sections]);
+  }, [paper.topic, paper.course_code, project, sections]);
+
 
   async function download(kind: "docx" | "pdf") {
     tap(12);
