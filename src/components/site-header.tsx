@@ -9,7 +9,6 @@ import { amIAdmin } from "@/lib/admin.functions";
 
 const nav = [
   { to: "/", label: "Home" },
-  { to: "/demo", label: "Interactive Demo" },
   { to: "/pricing", label: "Pricing" },
   { to: "/faq", label: "FAQ" },
 ] as const;
@@ -135,7 +134,7 @@ export function SiteFooter() {
         <div>
           <h4 className="font-medium mb-3">Product</h4>
           <ul className="space-y-2 text-muted-foreground">
-            <li><Link to="/demo" className="hover:text-foreground">Interactive Demo</Link></li>
+            <li><Link to="/register" className="hover:text-foreground">Get started</Link></li>
             <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
             <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
           </ul>
