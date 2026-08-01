@@ -63,7 +63,7 @@ export const paperDraftSchema = z
   .strict();
 
 export type ExportParseResult =
-  | { ok: true; draft: Partial<PaperDraft> | undefined }
+  | { ok: true; draft: ExportInput | undefined }
   | { ok: false; status: number; message: string };
 
 /** Reads and validates an export request body, enforcing size and schema limits. */
@@ -98,5 +98,5 @@ export async function parseExportRequest(request: Request): Promise<ExportParseR
     return { ok: false, status: 400, message: "Invalid draft payload" };
   }
 
-  return { ok: true, draft: parsed.data as Partial<PaperDraft> };
+  return { ok: true, draft: parsed.data as ExportInput };
 }
