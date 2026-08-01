@@ -23,6 +23,23 @@ export interface PaperDraft {
   references: string[];
 }
 
+/** A blank draft — used for real user projects so no template content leaks in. */
+export function emptyDraft(): PaperDraft {
+  return {
+    topic: "",
+    submissionLine: "",
+    introduction: [],
+    literature: [],
+    methodology: [],
+    results: [],
+    discussion: [],
+    conclusion: [],
+    appendices: [],
+    references: [],
+  };
+}
+
+/** The pre-filled sample paper, used only for the downloadable sample export. */
 export function defaultDraft(): PaperDraft {
   return {
     topic: demoProject.topic,
