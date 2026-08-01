@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
 import { listPapers } from "@/lib/papers.functions";
 import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
-import { useEffect } from "react";
 import { getAmbassadorDashboard } from "@/lib/ambassadors.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
