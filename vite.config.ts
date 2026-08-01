@@ -34,6 +34,8 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    define,
+
     plugins: [
       VitePWA({
         strategies: "generateSW",
