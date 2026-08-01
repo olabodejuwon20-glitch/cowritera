@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles, FileText, ShieldCheck, Wand2, BookOpen, Download,
-  ArrowRight, Check, GraduationCap, Layers, Zap,
+  ArrowRight, Check, GraduationCap,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { SampleExportButtons, SampleExportLinks } from "@/components/sample-export";
