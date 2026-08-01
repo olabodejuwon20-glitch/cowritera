@@ -187,3 +187,24 @@
   -webkit-overflow-scrolling: touch;
   background: var(--surface-2);
 }
+
+
+/* Lovable Badge Removed by Lovable Zero */
+aside#lovable-badge,
+#lovable-badge,
+#lovable-badge-cta,
+#lovable-badge-text,
+#lovable-badge-divider,
+#lovable-badge-close {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  z-index: -99999 !important;
+}
