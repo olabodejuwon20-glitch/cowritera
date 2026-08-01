@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { PaperDraft } from "./paper-draft";
+import type { ExportInput } from "./export-types";
 
 /** Hard cap on raw request body size (bytes) for export endpoints. */
 export const MAX_EXPORT_BODY_BYTES = 256 * 1024; // 256 KB
@@ -10,6 +10,41 @@ const MAX_PARAGRAPHS = 200;
 const paragraphs = z
   .array(z.string().max(MAX_PARAGRAPH_CHARS))
   .max(MAX_PARAGRAPHS);
+
+const shortText = z.string().max(300).optional().nullable();
+
+const coverSchema = z
+  .object({
+    institution: shortText,
+    institutionAddress: shortText,
+    faculty: shortText,
+    department: shortText,
+    courseCode: shortText,
+    courseTitle: shortText,
+    groupName: shortText,
+    lecturer: shortText,
+    session: shortText,
+    date: shortText,
+    resultsSubtopic: shortText,
+    discussionSubtopic: shortText,
+    members: z
+      .array(
+        z
+          .object({
+            sn: z.number().int().min(0).max(999).optional(),
+            name: shortText,
+            surname: shortText,
+            otherName: shortText,
+            matric: shortText,
+            phone: shortText,
+            role: shortText,
+          })
+          .strict(),
+      )
+      .max(60)
+      .optional(),
+  })
+  .strict();
 
 export const paperDraftSchema = z
   .object({
@@ -23,11 +58,12 @@ export const paperDraftSchema = z
     conclusion: paragraphs.optional(),
     appendices: paragraphs.optional(),
     references: paragraphs.optional(),
+    cover: coverSchema.optional(),
   })
   .strict();
 
 export type ExportParseResult =
-  | { ok: true; draft: Partial<PaperDraft> | undefined }
+  | { ok: true; draft: ExportInput | undefined }
   | { ok: false; status: number; message: string };
 
 /** Reads and validates an export request body, enforcing size and schema limits. */
@@ -62,5 +98,5 @@ export async function parseExportRequest(request: Request): Promise<ExportParseR
     return { ok: false, status: 400, message: "Invalid draft payload" };
   }
 
-  return { ok: true, draft: parsed.data as Partial<PaperDraft> };
+  return { ok: true, draft: parsed.data as ExportInput };
 }

@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { buildPdf } from "@/lib/paper-export";
 import { parseExportRequest } from "@/lib/export-validation";
-import type { PaperDraft } from "@/lib/paper-draft";
+import type { ExportInput } from "@/lib/export-types";
 
-async function respond(draft?: Partial<PaperDraft>) {
+async function respond(draft?: ExportInput) {
   const bytes = await buildPdf(draft);
   return new Response(bytes as unknown as BodyInit, {
     headers: {
       "content-type": "application/pdf",
-      "content-disposition": 'attachment; filename="GNS102-Term-Paper.pdf"',
+      "content-disposition": 'attachment; filename="Co-Research-AI-Term-Paper.pdf"',
     },
   });
 }

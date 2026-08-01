@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Home, FolderKanban, FileText, Sparkles, LayoutTemplate, Compass, Wallet,
+  Home, FolderKanban, FileText, Sparkles, Wallet,
   HelpCircle, Settings, LogOut, Shield, Plus, PanelLeftClose, PanelLeft,
   Menu, Bell, ChevronRight, ChevronLeft, WifiOff, CloudUpload, GraduationCap,
 } from "lucide-react";
@@ -137,7 +137,6 @@ const GROUPS: NavGroup[] = [
       { to: "/dashboard", label: "Dashboard", icon: Home, exact: true },
       { to: "/dashboard", label: "My Projects", icon: FolderKanban },
       { to: "/new", label: "New Project", icon: Plus },
-      { to: "/demo", label: "Templates", icon: LayoutTemplate },
       { to: "/faq", label: "FAQ", icon: HelpCircle },
     ],
   },
@@ -308,7 +307,7 @@ export function CardSkeleton() {
 
 const TABS: { to: string; label: string; icon: typeof Home; match: (p: string) => boolean }[] = [
   { to: "/dashboard", label: "Home", icon: Home, match: (p) => p === "/dashboard" },
-  { to: "/demo", label: "", icon: Compass, match: (p) => p.startsWith("/demo") },
+  { to: "/new", label: "New", icon: Plus, match: (p) => p.startsWith("/new") },
   { to: "/faq", label: "Help", icon: HelpCircle, match: (p) => p.startsWith("/faq") },
   { to: "/account", label: "You", icon: Settings, match: (p) => p.startsWith("/account") },
 ];

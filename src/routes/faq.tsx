@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { SampleExportLinks } from "@/components/sample-export";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/faq")({
 const faqs = [
   { q: "What is Co-Research AI?", a: "Co-Research AI is an academic writing platform that turns your topic, group members and lecturer instructions into a properly structured, submission-ready GNS 102 term paper." },
   { q: "How is this different from ChatGPT?", a: "It's a dedicated academic workspace — not a chatbot. You get a guided project flow, section-by-section regeneration, lecturer compliance checks, cover page generation, and Word/PDF exports formatted to institutional standards." },
-  { q: "How much does it cost?", a: "The interactive demo is free. Creating your own project costs ₦3,500 as a one-time Project Pass — everything inside your project is unlimited after that." },
+  { q: "How much does it cost?", a: "You can download a free sample term paper. Creating your own project costs ₦3,500 as a one-time Project Pass — everything inside your project is unlimited after that." },
   { q: "What does 'unlimited' really mean?", a: "You can regenerate sections, edit content, rewrite paragraphs, update references, change group members and enforce lecturer rules as many times as you like within your active project. No token counters." },
   { q: "Can I create more than one project?", a: "Each account owns one active project at a time. If you need a second paper on a new topic, you'll unlock a new Project Pass when you're ready." },
   { q: "Which paper types are supported?", a: "The first release focuses exclusively on GNS 102 term papers. Assignments, seminar papers, SIWES reports and final year projects are on the roadmap." },
@@ -45,9 +46,7 @@ function FAQPage() {
           </div>
           <div className="mt-12 rounded-2xl border bg-surface/60 p-6 text-center">
             <p className="text-muted-foreground">Still have questions?</p>
-            <Link to="/demo" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm hover:brightness-110">
-              Try the demo <ArrowRight className="h-4 w-4" />
-            </Link>
+            <SampleExportLinks className="mt-4 justify-center" />
           </div>
         </section>
       </main>
