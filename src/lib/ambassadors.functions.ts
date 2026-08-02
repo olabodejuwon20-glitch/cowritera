@@ -229,6 +229,7 @@ export const adminListAmbassadors = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
+    const db = await serviceDb(context.supabase);
     const { data: rows, error } = await db
       .from("ambassadors")
       .select("*")

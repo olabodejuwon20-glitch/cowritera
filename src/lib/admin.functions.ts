@@ -91,10 +91,8 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const [{ data: profiles }, { data: papers }, emailById] = await Promise.all([
       db.from("profiles").select("id, full_name, university, department, created_at").order("created_at", { ascending: false }).limit(500),
       db.from("papers").select("user_id, paid, status"),
-      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 500 }),
+      listUserEmails(),
     ]);
-    const emailById = new Map<string, string>();
-    for (const u of authUsers?.users ?? []) emailById.set(u.id, u.email ?? "");
     return (profiles ?? []).map((p: any) => {
       const own = (papers ?? []).filter((r: any) => r.user_id === p.id);
       return {
@@ -111,7 +109,7 @@ export const adminListPapers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const db = await serviceDb(context.supabase);
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db
       .from("papers")
       .select("id, user_id, topic, course_code, paid, status, created_at, updated_at")
       .order("created_at", { ascending: false })
@@ -125,7 +123,7 @@ export const adminListPayments = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const db = await serviceDb(context.supabase);
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db
       .from("payments")
       .select("id, user_id, paper_id, amount_kobo, currency, status, paystack_reference, created_at")
       .order("created_at", { ascending: false })
