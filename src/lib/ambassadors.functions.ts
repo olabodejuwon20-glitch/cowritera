@@ -21,15 +21,22 @@ import { serviceDb, listUserEmails } from "./service-db";
 export const trackReferralClick = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data }) => {
-    const code = data.code.trim().toUpperCase();
-    const { data: amb } = await db
-      .from("ambassadors")
-      .select("id, status")
-      .eq("referral_code", code)
-      .maybeSingle();
-    if (!amb || amb.status !== "active") return { ok: false as const };
-    await db.from("referral_clicks").insert({ ambassador_id: amb.id, referral_code: code });
-    return { ok: true as const };
+    const { createClient } = await import("@supabase/supabase-js");
+    const { supabaseUrl, supabasePublishableKey } = await import("@/integrations/supabase/env");
+    const url = supabaseUrl();
+    const key = supabasePublishableKey();
+    if (!url || !key) return { ok: false as const };
+    const anon = createClient(url, key, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+      global: { fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.delete("Authorization");
+        headers.set("apikey", key);
+        return fetch(input as any, { ...init, headers });
+      } },
+    });
+    const { data: ok } = await anon.rpc("track_referral_click", { _code: data.code });
+    return { ok: !!ok };
   });
 
 /* ------------------------------ ambassador -------------------------------- */
@@ -38,31 +45,10 @@ export const attachReferral = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data, context }) => {
-    const code = data.code.trim().toUpperCase();
-
-    const { data: existing } = await db
-      .from("referrals")
-      .select("id")
-      .eq("referred_user_id", context.userId)
-      .maybeSingle();
-    if (existing) return { ok: false as const, reason: "already_referred" };
-
-    const { data: amb } = await db
-      .from("ambassadors")
-      .select("id, campaign_id, user_id, status")
-      .eq("referral_code", code)
-      .maybeSingle();
-    if (!amb || amb.status !== "active") return { ok: false as const, reason: "invalid_code" };
-    if (amb.user_id === context.userId) return { ok: false as const, reason: "self_referral" };
-
-    const { error } = await db.from("referrals").insert({
-      ambassador_id: amb.id,
-      campaign_id: amb.campaign_id,
-      referred_user_id: context.userId,
-      status: "registered",
-    });
+    const { data: res, error } = await context.supabase.rpc("attach_referral", { _code: data.code });
     if (error) return { ok: false as const, reason: "insert_failed" };
-    return { ok: true as const };
+    const out = (res ?? {}) as { ok?: boolean; reason?: string };
+    return out.ok ? { ok: true as const } : { ok: false as const, reason: out.reason ?? "invalid_code" };
   });
 
 export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
@@ -70,61 +56,20 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => TokenInput.parse(d))
   .handler(async ({ data, context }) => {
     const email = String((context.claims as any)?.email ?? "").toLowerCase();
-
-    const { data: invite } = await db
-      .from("ambassador_invites")
-      .select("*")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (!invite) throw new Error("This invitation link is not valid.");
-    if (invite.status === "revoked") throw new Error("This invitation has been revoked.");
-    if (new Date(invite.expires_at as string).getTime() < Date.now()) {
-      throw new Error("This invitation has expired.");
-    }
-    if (String(invite.email).toLowerCase() !== email) {
-      throw new Error(`This invitation was sent to ${invite.email}. Sign in with that email to accept it.`);
-    }
-
-    const { data: already } = await db
-      .from("ambassadors")
-      .select("id, referral_code")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    let referral_code = already?.referral_code as string | undefined;
-
-    if (!already) {
-      for (let attempt = 0; attempt < 6 && !referral_code; attempt++) {
-        const candidate = randomCode(6);
-        const { error } = await db.from("ambassadors").insert({
-          user_id: context.userId,
-          campaign_id: invite.campaign_id,
-          referral_code: candidate,
-        });
-        if (!error) referral_code = candidate;
-        else if (!String(error.message).toLowerCase().includes("duplicate")) throw new Error(error.message);
-      }
-      if (!referral_code) throw new Error("Could not generate a referral code. Please try again.");
-    }
-
-    await db
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "ambassador" as any })
-      .select("id");
-
-    if (invite.status !== "accepted") {
-      await supabaseAdmin
-        .from("ambassador_invites")
-        .update({ status: "accepted", accepted_by: context.userId, accepted_at: new Date().toISOString() })
-        .eq("id", invite.id);
-    }
-
-    return { ok: true as const, referral_code };
+    const { data: res, error } = await context.supabase.rpc("accept_ambassador_invite", {
+      _token: data.token,
+      _email: email,
+    });
+    if (error) throw new Error(error.message);
+    const out = (res ?? {}) as { ok?: boolean; referral_code?: string };
+    return { ok: true as const, referral_code: out.referral_code };
   });
 
 export const getAmbassadorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const db = await serviceDb(context.supabase);
+
 
     const { data: amb } = await db
       .from("ambassadors")
