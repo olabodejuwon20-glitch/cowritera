@@ -829,8 +829,10 @@ function ExportStep({
             sn: i + 1,
             name: String((m ?? {}).name ?? ""),
             matric: String((m ?? {}).matric ?? ""),
+            phone: String((m ?? {}).phone ?? ""),
+            role: String((m ?? {}).role ?? ""),
           }))
-          .filter((m) => m.name || m.matric),
+          .filter((m) => m.name || m.matric || m.phone || m.role),
       },
       introduction: toParas("introduction"),
       literature: toParas("literature"),
