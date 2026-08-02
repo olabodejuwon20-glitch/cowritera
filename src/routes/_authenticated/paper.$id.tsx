@@ -9,7 +9,7 @@ import {
   GraduationCap, Wand2, RefreshCw, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 
-import { WorkspaceShell, Breadcrumbs, StatusBanner, Skeleton } from "@/components/workspace-shell";
+import { MobileAppLayout, Breadcrumbs, StatusBanner, Skeleton } from "@/components/mobile-app-layout";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import {
@@ -176,21 +176,21 @@ function PaperPage() {
 
   if (paperQ.isLoading) {
     return (
-      <WorkspaceShell title="Loading…" focus>
+      <MobileAppLayout title="Loading…" focus>
         <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-6">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-12 w-full rounded-2xl" />
           <Skeleton className="h-[55vh] w-full rounded-2xl" />
         </div>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
   if (paperQ.error || !paperQ.data) {
     return (
-      <WorkspaceShell title="Paper">
+      <MobileAppLayout title="Paper">
         <div className="p-6 text-sm text-destructive">{(paperQ.error as Error)?.message ?? "Paper not found"}</div>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
@@ -211,7 +211,7 @@ function PaperPage() {
   const content = sections[step.key] ?? "";
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       fill
       focus
       title={paper.topic || "Untitled paper"}
@@ -423,7 +423,7 @@ function PaperPage() {
           />
         </div>
       </BottomSheet>
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }
 
@@ -829,8 +829,10 @@ function ExportStep({
             sn: i + 1,
             name: String((m ?? {}).name ?? ""),
             matric: String((m ?? {}).matric ?? ""),
+            phone: String((m ?? {}).phone ?? ""),
+            role: String((m ?? {}).role ?? ""),
           }))
-          .filter((m) => m.name || m.matric),
+          .filter((m) => m.name || m.matric || m.phone || m.role),
       },
       introduction: toParas("introduction"),
       literature: toParas("literature"),

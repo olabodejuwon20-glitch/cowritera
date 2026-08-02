@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { amIAdmin } from "@/lib/admin.functions";
-import { WorkspaceShell, Card } from "@/components/workspace-shell";
+import { MobileAppLayout, Card } from "@/components/mobile-app-layout";
 import { LayoutDashboard, Users, FolderKanban, Wallet, Ticket, HelpCircle, Loader2, ShieldAlert, Megaphone } from "lucide-react";
 import { useEffect } from "react";
 
@@ -34,27 +34,27 @@ function AdminLayout() {
 
   if (isLoading) {
     return (
-      <WorkspaceShell title="Admin" status="Checking access">
+      <MobileAppLayout title="Admin" status="Checking access">
         <Card className="grid place-items-center py-16 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
         </Card>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
   if (error || !data?.admin) {
     return (
-      <WorkspaceShell title="Admin" status="Restricted">
+      <MobileAppLayout title="Admin" status="Restricted">
         <Card className="py-16 text-center">
           <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground/60" />
           <h1 className="mt-3 text-xl font-semibold">Admin only</h1>
           <p className="mt-1 text-sm text-muted-foreground">You don't have admin access on this account.</p>
         </Card>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       title="Admin panel"
       status={current?.label ?? "Overview"}
       breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "Admin", to: "/admin" }, { label: current?.label ?? "Overview" }]}
@@ -80,6 +80,6 @@ function AdminLayout() {
       <div className="min-w-0">
         <Outlet />
       </div>
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }

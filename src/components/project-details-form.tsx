@@ -1,6 +1,6 @@
 import { Plus, Trash2, Users } from "lucide-react";
 
-export type Member = { name: string; matric: string };
+export type Member = { name: string; matric: string; phone: string; role: string };
 
 export type ProjectDetails = {
   institution: string;
@@ -15,6 +15,10 @@ export type ProjectDetails = {
   members: Member[];
 };
 
+export function blankMember(): Member {
+  return { name: "", matric: "", phone: "", role: "" };
+}
+
 export const emptyDetails: ProjectDetails = {
   institution: "",
   faculty: "",
@@ -25,7 +29,7 @@ export const emptyDetails: ProjectDetails = {
   lecturer_name: "",
   session: "",
   submission_date: "",
-  members: [{ name: "", matric: "" }],
+  members: [blankMember()],
 };
 
 export function detailsFromProject(project: Record<string, unknown>): ProjectDetails {
@@ -33,9 +37,14 @@ export function detailsFromProject(project: Record<string, unknown>): ProjectDet
   const members = rawMembers
     .map((m) => {
       const o = (m ?? {}) as Record<string, unknown>;
-      return { name: String(o.name ?? ""), matric: String(o.matric ?? "") };
+      return {
+        name: String(o.name ?? ""),
+        matric: String(o.matric ?? ""),
+        phone: String(o.phone ?? ""),
+        role: String(o.role ?? ""),
+      };
     })
-    .filter((m) => m.name || m.matric);
+    .filter((m) => m.name || m.matric || m.phone || m.role);
   return {
     institution: String(project.institution ?? ""),
     faculty: String(project.faculty ?? ""),
@@ -46,7 +55,7 @@ export function detailsFromProject(project: Record<string, unknown>): ProjectDet
     lecturer_name: String(project.lecturer_name ?? ""),
     session: String(project.session ?? ""),
     submission_date: String(project.submission_date ?? ""),
-    members: members.length ? members : [{ name: "", matric: "" }],
+    members: members.length ? members : [blankMember()],
   };
 }
 
@@ -54,8 +63,13 @@ export function cleanDetails(d: ProjectDetails) {
   return {
     ...d,
     members: d.members
-      .map((m) => ({ name: m.name.trim(), matric: m.matric.trim() }))
-      .filter((m) => m.name || m.matric),
+      .map((m) => ({
+        name: m.name.trim(),
+        matric: m.matric.trim(),
+        phone: (m.phone ?? "").trim(),
+        role: (m.role ?? "").trim(),
+      }))
+      .filter((m) => m.name || m.matric || m.phone || m.role),
   };
 }
 
@@ -108,45 +122,67 @@ export function ProjectDetailsFields({
         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <Users className="h-4 w-4 text-primary" /> Group members (shown on the cover page)
         </div>
-        <div className="mt-3 space-y-2">
+
+        {/* Mobile-first: vertically stacked member cards — never a horizontal table */}
+        <div className="mt-3 space-y-3">
           {value.members.map((m, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <input
-                value={m.name}
-                onChange={(e) => setMember(i, { name: e.target.value })}
-                placeholder="Full name"
-                className="min-h-12 flex-1 rounded-2xl border bg-background px-3.5 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
-              />
-              <input
-                value={m.matric}
-                onChange={(e) => setMember(i, { matric: e.target.value })}
-                placeholder="Matric no."
-                className="min-h-12 w-32 rounded-2xl border bg-background px-3.5 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
-              />
-              <button
-                type="button"
-                aria-label="Remove member"
-                onClick={() =>
-                  set(
-                    "members",
-                    value.members.length > 1 ? value.members.filter((_, idx) => idx !== i) : [{ name: "", matric: "" }],
-                  )
-                }
-                className="grid h-12 w-10 shrink-0 place-items-center rounded-2xl border text-muted-foreground active:bg-primary-soft"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+            <div key={i} className="rounded-2xl border bg-card p-3 shadow-[var(--shadow-soft)]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                  Member {i + 1}
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove member ${i + 1}`}
+                  onClick={() =>
+                    set(
+                      "members",
+                      value.members.length > 1
+                        ? value.members.filter((_, idx) => idx !== i)
+                        : [blankMember()],
+                    )
+                  }
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-muted-foreground active:bg-primary-soft"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["name", "Name", "Full name", "text"],
+                    ["matric", "Matric number", "e.g. AGP/01/7901", "text"],
+                    ["phone", "Phone number", "e.g. 08012345678", "tel"],
+                    ["role", "Role", "e.g. Group Leader", "text"],
+                  ] as [keyof Member, string, string, string][]
+                ).map(([key, label, ph, type]) => (
+                  <label key={key} className="block min-w-0">
+                    <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                    <input
+                      value={m[key] ?? ""}
+                      type={type}
+                      inputMode={type === "tel" ? "tel" : undefined}
+                      onChange={(e) => setMember(i, { [key]: e.target.value } as Partial<Member>)}
+                      placeholder={ph}
+                      className="mt-1 min-h-12 w-full min-w-0 rounded-2xl border bg-background px-3.5 text-[15px] outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </label>
+                ))}
+              </div>
             </div>
           ))}
         </div>
+
         <button
           type="button"
-          onClick={() => set("members", [...value.members, { name: "", matric: "" }])}
-          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border text-sm active:bg-primary-soft"
+          onClick={() => set("members", [...value.members, blankMember()])}
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border bg-card text-sm active:bg-primary-soft"
         >
           <Plus className="h-4 w-4" /> Add member
         </button>
       </div>
+
     </div>
   );
 }

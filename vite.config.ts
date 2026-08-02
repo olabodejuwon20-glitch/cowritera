@@ -6,14 +6,41 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
+import { loadEnv } from "vite";
+
+/**
+ * Host-agnostic Supabase config.
+ * Works on Lovable Cloud (VITE_* in .env) and on Vercel, where the project may
+ * only define SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY (or *_ANON_KEY).
+ */
+const fileEnv = loadEnv(process.env.NODE_ENV || "production", process.cwd(), "");
+/** Host env vars (Vercel, Netlify, …) always win over the committed .env file. */
+const pick = (...names: string[]) =>
+  names.map((n) => process.env[n]).find(Boolean) ?? names.map((n) => fileEnv[n]).find(Boolean);
+
+const supabaseUrl = pick("VITE_SUPABASE_URL", "SUPABASE_URL");
+const supabaseKey = pick(
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_ANON_KEY",
+  "SUPABASE_ANON_KEY",
+);
+
+const define: Record<string, string> = {};
+if (supabaseUrl) define["import.meta.env.VITE_SUPABASE_URL"] = JSON.stringify(supabaseUrl);
+if (supabaseKey) define["import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY"] = JSON.stringify(supabaseKey);
+
 
 export default defineConfig({
+
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
   vite: {
+    define,
+
     plugins: [
       VitePWA({
         strategies: "generateSW",

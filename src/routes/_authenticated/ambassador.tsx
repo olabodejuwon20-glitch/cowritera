@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { WorkspaceShell, Card, PageTitle, CardSkeleton } from "@/components/workspace-shell";
+import { MobileAppLayout, Card, PageTitle, CardSkeleton } from "@/components/mobile-app-layout";
 import { getAmbassadorDashboard } from "@/lib/ambassadors.functions";
 import { nairaFromKobo } from "@/lib/ambassadors.shared";
 import { ShareSheet, type ShareTarget } from "@/components/share-sheet";
@@ -78,25 +78,25 @@ function AmbassadorPage() {
 
   if (isLoading) {
     return (
-      <WorkspaceShell title="Ambassador" status="Loading" wide>
+      <MobileAppLayout title="Ambassador" status="Loading" wide>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
         </div>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
   if (error) {
     return (
-      <WorkspaceShell title="Ambassador" wide>
+      <MobileAppLayout title="Ambassador" wide>
         <Card className="p-6 text-sm text-destructive">{(error as Error).message}</Card>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
   if (!amb) {
     return (
-      <WorkspaceShell title="Ambassador" status="Invitation only" wide>
+      <MobileAppLayout title="Ambassador" status="Invitation only" wide>
         <Card className="p-8 text-center">
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary-soft text-primary">
             <Megaphone className="h-6 w-6" />
@@ -110,14 +110,14 @@ function AmbassadorPage() {
             Back to my projects
           </Link>
         </Card>
-      </WorkspaceShell>
+      </MobileAppLayout>
     );
   }
 
   const d: any = data;
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       title="Ambassador"
       status={campaign ? campaign.name : "Campus programme"}
       breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "Ambassador" }]}
@@ -313,7 +313,7 @@ function AmbassadorPage() {
         target={shareTarget}
         referralUrl={referralUrl}
       />
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }
 

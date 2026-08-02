@@ -147,17 +147,25 @@
 @layer base {
   html, body {
     height: 100%;
-    overscroll-behavior-y: none;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: pan-x pan-y;
   }
   body {
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
+    position: relative;
   }
   /* App-like: no accidental text selection on chrome, but keep it in editors */
   button, a, nav, header { -webkit-user-select: none; user-select: none; }
   input, textarea, [contenteditable="true"], .doc-page { -webkit-user-select: text; user-select: text; }
+  /* The document canvas manages its own pinch/pan gestures */
+  .doc-canvas, .doc-canvas * { touch-action: none; }
 }
+
 
 @keyframes page-in {
   from { opacity: 0; transform: translate3d(0, 8px, 0); }

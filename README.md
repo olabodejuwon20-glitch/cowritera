@@ -534,3 +534,22 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+
+## Environment variables (any host, including Vercel)
+
+The app has no hard dependency on Lovable Cloud env names. Set these in your host
+(Vercel → Settings → Environment Variables) for **Production, Preview and Development**:
+
+| Variable | Scope | Notes |
+| --- | --- | --- |
+| `SUPABASE_URL` | build + server | `VITE_SUPABASE_URL` also accepted |
+| `SUPABASE_PUBLISHABLE_KEY` | build + server | `VITE_SUPABASE_PUBLISHABLE_KEY` / `*_ANON_KEY` also accepted |
+| `SUPABASE_SERVICE_ROLE_KEY` | server only | privileged server functions |
+| `PAYSTACK_SECRET_KEY` | server only | payment verification |
+| `PAYSTACK_PUBLIC_KEY` | server only | checkout init |
+| `LOVABLE_API_KEY` | server only | AI generation gateway |
+
+`vite.config.ts` inlines the browser-visible Supabase URL/key at build time from either
+naming convention, and host env vars always take precedence over the committed `.env`.
+Server code resolves the same values at runtime via `src/integrations/supabase/env.ts`.

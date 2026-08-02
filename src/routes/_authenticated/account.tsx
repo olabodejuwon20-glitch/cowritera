@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   User, LogOut, Shield, Download, Bell, BellOff, Wifi, WifiOff,   FileText, HelpCircle, Wallet, ChevronRight, Smartphone,
 } from "lucide-react";
-import { WorkspaceShell, Card, PageTitle } from "@/components/workspace-shell";
+import { MobileAppLayout, Card, PageTitle } from "@/components/mobile-app-layout";
 import { useSession, signOut } from "@/lib/auth";
 import { amIAdmin } from "@/lib/admin.functions";
 import { listPapers } from "@/lib/papers.functions";
@@ -48,7 +48,7 @@ function AccountPage() {
   const paid = papers?.filter((p) => p.paid).length ?? 0;
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       title="Settings"
       status="Account & app preferences"
       breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "Settings" }]}
@@ -117,7 +117,7 @@ function AccountPage() {
           <User className="mr-1 inline h-3 w-3" /> Co-Research AI · built for students
         </p>
       </div>
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }
 
