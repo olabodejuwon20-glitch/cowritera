@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { serviceDb, listUserEmails } from "./service-db";
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data, error } = await context.supabase.rpc("has_role", {
@@ -25,23 +26,23 @@ export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = await serviceDb(context.supabase);
 
     const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
     const since7 = new Date(Date.now() - 7 * 864e5).toISOString();
 
     const [usersC, papersC, activeC, paidC, successPayments, recentUsers, recentPayments, recentPapers, growth7, revenue30] =
       await Promise.all([
-        supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
-        supabaseAdmin.from("papers").select("*", { count: "exact", head: true }),
-        supabaseAdmin.from("papers").select("*", { count: "exact", head: true }).eq("status", "active"),
-        supabaseAdmin.from("papers").select("*", { count: "exact", head: true }).eq("paid", true),
-        supabaseAdmin.from("payments").select("amount_kobo").eq("status", "success"),
-        supabaseAdmin.from("profiles").select("id, full_name, created_at").order("created_at", { ascending: false }).limit(6),
-        supabaseAdmin.from("payments").select("id, user_id, amount_kobo, status, created_at, paystack_reference").order("created_at", { ascending: false }).limit(6),
-        supabaseAdmin.from("papers").select("id, user_id, topic, course_code, paid, status, created_at").order("created_at", { ascending: false }).limit(6),
-        supabaseAdmin.from("profiles").select("created_at").gte("created_at", since7),
-        supabaseAdmin.from("payments").select("amount_kobo, created_at, status").gte("created_at", since30).eq("status", "success"),
+        db.from("profiles").select("*", { count: "exact", head: true }),
+        db.from("papers").select("*", { count: "exact", head: true }),
+        db.from("papers").select("*", { count: "exact", head: true }).eq("status", "active"),
+        db.from("papers").select("*", { count: "exact", head: true }).eq("paid", true),
+        db.from("payments").select("amount_kobo").eq("status", "success"),
+        db.from("profiles").select("id, full_name, created_at").order("created_at", { ascending: false }).limit(6),
+        db.from("payments").select("id, user_id, amount_kobo, status, created_at, paystack_reference").order("created_at", { ascending: false }).limit(6),
+        db.from("papers").select("id, user_id, topic, course_code, paid, status, created_at").order("created_at", { ascending: false }).limit(6),
+        db.from("profiles").select("created_at").gte("created_at", since7),
+        db.from("payments").select("amount_kobo, created_at, status").gte("created_at", since30).eq("status", "success"),
       ]);
 
     const totalRevenueKobo = (successPayments.data ?? []).reduce((s: number, r: any) => s + (r.amount_kobo ?? 0), 0);
@@ -86,10 +87,10 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: profiles }, { data: papers }, { data: authUsers }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, full_name, university, department, created_at").order("created_at", { ascending: false }).limit(500),
-      supabaseAdmin.from("papers").select("user_id, paid, status"),
+    const db = await serviceDb(context.supabase);
+    const [{ data: profiles }, { data: papers }, emailById] = await Promise.all([
+      db.from("profiles").select("id, full_name, university, department, created_at").order("created_at", { ascending: false }).limit(500),
+      db.from("papers").select("user_id, paid, status"),
       supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 500 }),
     ]);
     const emailById = new Map<string, string>();
@@ -109,7 +110,7 @@ export const adminListPapers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = await serviceDb(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("papers")
       .select("id, user_id, topic, course_code, paid, status, created_at, updated_at")
@@ -123,7 +124,7 @@ export const adminListPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = await serviceDb(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("payments")
       .select("id, user_id, paper_id, amount_kobo, currency, status, paystack_reference, created_at")

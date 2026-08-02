@@ -14,21 +14,21 @@ import {
   AnnouncementInput,
   ResourceInput,
 } from "./ambassadors.shared";
+import { serviceDb, listUserEmails } from "./service-db";
 
 /* ------------------------------- public ---------------------------------- */
 
 export const trackReferralClick = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const code = data.code.trim().toUpperCase();
-    const { data: amb } = await supabaseAdmin
+    const { data: amb } = await db
       .from("ambassadors")
       .select("id, status")
       .eq("referral_code", code)
       .maybeSingle();
     if (!amb || amb.status !== "active") return { ok: false as const };
-    await supabaseAdmin.from("referral_clicks").insert({ ambassador_id: amb.id, referral_code: code });
+    await db.from("referral_clicks").insert({ ambassador_id: amb.id, referral_code: code });
     return { ok: true as const };
   });
 
@@ -38,17 +38,16 @@ export const attachReferral = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CodeInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const code = data.code.trim().toUpperCase();
 
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await db
       .from("referrals")
       .select("id")
       .eq("referred_user_id", context.userId)
       .maybeSingle();
     if (existing) return { ok: false as const, reason: "already_referred" };
 
-    const { data: amb } = await supabaseAdmin
+    const { data: amb } = await db
       .from("ambassadors")
       .select("id, campaign_id, user_id, status")
       .eq("referral_code", code)
@@ -56,7 +55,7 @@ export const attachReferral = createServerFn({ method: "POST" })
     if (!amb || amb.status !== "active") return { ok: false as const, reason: "invalid_code" };
     if (amb.user_id === context.userId) return { ok: false as const, reason: "self_referral" };
 
-    const { error } = await supabaseAdmin.from("referrals").insert({
+    const { error } = await db.from("referrals").insert({
       ambassador_id: amb.id,
       campaign_id: amb.campaign_id,
       referred_user_id: context.userId,
@@ -70,10 +69,9 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => TokenInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = String((context.claims as any)?.email ?? "").toLowerCase();
 
-    const { data: invite } = await supabaseAdmin
+    const { data: invite } = await db
       .from("ambassador_invites")
       .select("*")
       .eq("token", data.token)
@@ -87,7 +85,7 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
       throw new Error(`This invitation was sent to ${invite.email}. Sign in with that email to accept it.`);
     }
 
-    const { data: already } = await supabaseAdmin
+    const { data: already } = await db
       .from("ambassadors")
       .select("id, referral_code")
       .eq("user_id", context.userId)
@@ -98,7 +96,7 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
     if (!already) {
       for (let attempt = 0; attempt < 6 && !referral_code; attempt++) {
         const candidate = randomCode(6);
-        const { error } = await supabaseAdmin.from("ambassadors").insert({
+        const { error } = await db.from("ambassadors").insert({
           user_id: context.userId,
           campaign_id: invite.campaign_id,
           referral_code: candidate,
@@ -109,7 +107,7 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
       if (!referral_code) throw new Error("Could not generate a referral code. Please try again.");
     }
 
-    await supabaseAdmin
+    await db
       .from("user_roles")
       .insert({ user_id: context.userId, role: "ambassador" as any })
       .select("id");
@@ -127,9 +125,8 @@ export const acceptAmbassadorInvite = createServerFn({ method: "POST" })
 export const getAmbassadorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: amb } = await supabaseAdmin
+    const { data: amb } = await db
       .from("ambassadors")
       .select("*")
       .eq("user_id", context.userId)
@@ -138,28 +135,28 @@ export const getAmbassadorDashboard = createServerFn({ method: "GET" })
 
     const [campaignRes, clicksRes, referralsRes, payoutsRes, annRes, resRes] = await Promise.all([
       amb.campaign_id
-        ? supabaseAdmin.from("campaigns").select("*").eq("id", amb.campaign_id).maybeSingle()
+        ? db.from("campaigns").select("*").eq("id", amb.campaign_id).maybeSingle()
         : Promise.resolve({ data: null }),
-      supabaseAdmin
+      db
         .from("referral_clicks")
         .select("id", { count: "exact", head: true })
         .eq("ambassador_id", amb.id),
-      supabaseAdmin
+      db
         .from("referrals")
         .select("id, status, commission_kobo, credited_at, created_at")
         .eq("ambassador_id", amb.id)
         .order("created_at", { ascending: false }),
-      supabaseAdmin
+      db
         .from("ambassador_payouts")
         .select("*")
         .eq("ambassador_id", amb.id)
         .order("paid_at", { ascending: false }),
-      supabaseAdmin
+      db
         .from("campaign_announcements")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20),
-      supabaseAdmin
+      db
         .from("marketing_resources")
         .select("*")
         .order("created_at", { ascending: false })
@@ -287,8 +284,7 @@ export const adminListAmbassadors = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await db
       .from("ambassadors")
       .select("*")
       .order("created_at", { ascending: false })
@@ -299,13 +295,12 @@ export const adminListAmbassadors = createServerFn({ method: "GET" })
 
     const ids = list.map((a) => a.id);
     const [refs, payouts, profiles, users] = await Promise.all([
-      supabaseAdmin.from("referrals").select("ambassador_id, status, commission_kobo").in("ambassador_id", ids),
-      supabaseAdmin.from("ambassador_payouts").select("ambassador_id, amount_kobo, status").in("ambassador_id", ids),
-      supabaseAdmin.from("profiles").select("id, full_name").in("id", list.map((a) => a.user_id)),
-      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 500 }),
+      db.from("referrals").select("ambassador_id, status, commission_kobo").in("ambassador_id", ids),
+      db.from("ambassador_payouts").select("ambassador_id, amount_kobo, status").in("ambassador_id", ids),
+      db.from("profiles").select("id, full_name").in("id", list.map((a) => a.user_id)),
+      listUserEmails(),
     ]);
-    const emailById = new Map<string, string>();
-    for (const u of users?.data?.users ?? []) emailById.set(u.id, u.email ?? "");
+    const emailById = users;
     const nameById = new Map(((profiles.data ?? []) as any[]).map((p) => [p.id, p.full_name]));
 
     return list.map((a) => {
