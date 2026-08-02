@@ -1,6 +1,6 @@
 import { Plus, Trash2, Users } from "lucide-react";
 
-export type Member = { name: string; matric: string };
+export type Member = { name: string; matric: string; phone: string; role: string };
 
 export type ProjectDetails = {
   institution: string;
@@ -15,6 +15,10 @@ export type ProjectDetails = {
   members: Member[];
 };
 
+export function blankMember(): Member {
+  return { name: "", matric: "", phone: "", role: "" };
+}
+
 export const emptyDetails: ProjectDetails = {
   institution: "",
   faculty: "",
@@ -25,7 +29,7 @@ export const emptyDetails: ProjectDetails = {
   lecturer_name: "",
   session: "",
   submission_date: "",
-  members: [{ name: "", matric: "" }],
+  members: [blankMember()],
 };
 
 export function detailsFromProject(project: Record<string, unknown>): ProjectDetails {
@@ -33,9 +37,14 @@ export function detailsFromProject(project: Record<string, unknown>): ProjectDet
   const members = rawMembers
     .map((m) => {
       const o = (m ?? {}) as Record<string, unknown>;
-      return { name: String(o.name ?? ""), matric: String(o.matric ?? "") };
+      return {
+        name: String(o.name ?? ""),
+        matric: String(o.matric ?? ""),
+        phone: String(o.phone ?? ""),
+        role: String(o.role ?? ""),
+      };
     })
-    .filter((m) => m.name || m.matric);
+    .filter((m) => m.name || m.matric || m.phone || m.role);
   return {
     institution: String(project.institution ?? ""),
     faculty: String(project.faculty ?? ""),
@@ -46,7 +55,7 @@ export function detailsFromProject(project: Record<string, unknown>): ProjectDet
     lecturer_name: String(project.lecturer_name ?? ""),
     session: String(project.session ?? ""),
     submission_date: String(project.submission_date ?? ""),
-    members: members.length ? members : [{ name: "", matric: "" }],
+    members: members.length ? members : [blankMember()],
   };
 }
 
@@ -54,8 +63,13 @@ export function cleanDetails(d: ProjectDetails) {
   return {
     ...d,
     members: d.members
-      .map((m) => ({ name: m.name.trim(), matric: m.matric.trim() }))
-      .filter((m) => m.name || m.matric),
+      .map((m) => ({
+        name: m.name.trim(),
+        matric: m.matric.trim(),
+        phone: (m.phone ?? "").trim(),
+        role: (m.role ?? "").trim(),
+      }))
+      .filter((m) => m.name || m.matric || m.phone || m.role),
   };
 }
 
