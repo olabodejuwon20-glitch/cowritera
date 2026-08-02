@@ -27,7 +27,8 @@ function nodeEnv(): Env {
 }
 
 function pick(...names: string[]): string | undefined {
-  const sources = [viteEnv(), nodeEnv()];
+  // Runtime host env (Vercel/Node) wins over build-time inlined values.
+  const sources = [nodeEnv(), viteEnv()];
   for (const source of sources) {
     for (const name of names) {
       const value = source[name];
