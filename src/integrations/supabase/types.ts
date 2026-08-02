@@ -613,6 +613,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_ambassador_invite: {
+        Args: { _email: string; _token: string }
+        Returns: Json
+      }
+      attach_referral: { Args: { _code: string }; Returns: Json }
+      coupon_quote: { Args: { _code: string }; Returns: Json }
+      credit_referral_for_user: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -624,6 +631,7 @@ export type Database = {
         Args: { _code: string; _paper_id: string }
         Returns: Json
       }
+      track_referral_click: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "ambassador"
