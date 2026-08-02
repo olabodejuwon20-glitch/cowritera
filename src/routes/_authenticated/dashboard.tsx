@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { WorkspaceShell, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/workspace-shell";
+import { MobileAppLayout, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/mobile-app-layout";
 import { listPapers } from "@/lib/papers.functions";
 import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
 import { getAmbassadorDashboard } from "@/lib/ambassadors.functions";
@@ -31,7 +31,7 @@ function Dashboard() {
   const unlocked = data?.filter((p) => p.paid).length ?? 0;
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       title="Dashboard"
       status="Workspace overview"
       breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "My Projects" }]}
@@ -115,7 +115,7 @@ function Dashboard() {
           ))}
         </ul>
       )}
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }
 

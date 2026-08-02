@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { WorkspaceShell, Card, PageTitle } from "@/components/workspace-shell";
+import { MobileAppLayout, Card, PageTitle } from "@/components/mobile-app-layout";
 import { createPaper } from "@/lib/papers.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { initPayment } from "@/lib/paystack.functions";
@@ -94,7 +94,7 @@ function NewPaperPage() {
   }
 
   return (
-    <WorkspaceShell
+    <MobileAppLayout
       title="New Project"
       status="Set up your term paper"
       breadcrumbs={[{ label: "Home", to: "/dashboard" }, { label: "My Projects", to: "/dashboard" }, { label: "New Project" }]}
@@ -158,6 +158,6 @@ function NewPaperPage() {
             </button>
           </form>
       </Card>
-    </WorkspaceShell>
+    </MobileAppLayout>
   );
 }
