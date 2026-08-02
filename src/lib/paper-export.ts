@@ -22,9 +22,14 @@ function splitName(m: ExportMember): { surname: string; other: string } {
   return { surname: parts[parts.length - 1], other: parts.slice(0, -1).join(" ") };
 }
 
+/** True only for the downloadable sample paper (no user payload at all). */
+function isSampleRequest(input?: ExportInput): boolean {
+  return !input || Object.keys(input).length === 0;
+}
+
 function resolveCover(input?: ExportInput): { cover: Required<Pick<ExportCover, "institution">> & ExportCover; rows: Row[]; isDemo: boolean } {
-  const isDemo = !input?.cover;
-  const c: ExportCover = input?.cover ?? {
+  const isDemo = isSampleRequest(input);
+  const c: ExportCover = (!isDemo ? input?.cover ?? {} : undefined) ?? {
     institution: demoProject.institution,
     institutionAddress: demoProject.institutionAddress,
     groupName: demoProject.groupName,
@@ -53,7 +58,8 @@ function resolveCover(input?: ExportInput): { cover: Required<Pick<ExportCover, 
 }
 
 function resolveDraft(input?: ExportInput): PaperDraft {
-  const base = input?.cover ? emptyDraft() : defaultDraft();
+  // Real user projects NEVER inherit template content — only the sample does.
+  const base = isSampleRequest(input) ? defaultDraft() : emptyDraft();
   const merged = { ...base, ...(input ?? {}) } as PaperDraft & { cover?: unknown };
   delete merged.cover;
   return merged;
@@ -177,7 +183,7 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
         gap(120),
         ...entries.map((o) =>
           new Paragraph({
-            spacing: { after: 80, line: 320 },
+            spacing: { after: 80, line: 360 },
             children: [new TextRun({ text: t(`${o.n ? o.n + " " : ""}${o.t}`), bold: !o.n, font: TIMES, size: SIZE })],
           })
         ),

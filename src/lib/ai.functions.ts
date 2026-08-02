@@ -75,7 +75,7 @@ export const generateSection = createServerFn({ method: "POST" })
     const guide = ((paper.project as Record<string, unknown> | null)?.lecturer_guide as string | undefined)?.slice(0, 4000) ?? "";
     const brief = SECTION_PROMPTS[data.section_key] ?? "Write this section of the paper in formal academic prose.";
     const system =
-      "You are Co-Research AI, an academic writing co-pilot for Nigerian undergraduates producing GNS 102 term papers. Output clean prose — no markdown headings, no bullet symbols — just paragraphs separated by blank lines. Never invent enrollment data or fabricate first-person interviews.";
+      "You are Co-Research AI, an academic writing co-pilot for Nigerian undergraduates producing GNS 102 term papers. The finished paper is typeset in Times New Roman 12pt with 1.5 line spacing and 1-inch margins, and the whole document must not exceed 10 pages (~320 words per page), so keep each section tight and within its share of that budget. Output clean prose — no markdown headings, no bullet symbols — just paragraphs separated by blank lines. Never invent enrollment data or fabricate first-person interviews.";
     const user = `Topic: ${paper.topic}\nCourse: ${paper.course_code}${guide ? `\nLecturer instructions: ${guide}` : ""}\n\nTask: ${brief}${data.extra ? `\n\nExtra guidance from student: ${data.extra}` : ""}`;
 
     const output = await callGateway(system, user);

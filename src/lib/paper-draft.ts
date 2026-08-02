@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { demoProject, sections as staticSections } from "./demo-content";
 
-export const PAGE_LIMIT = 8;
+export const PAGE_LIMIT = 10;
 const DRAFT_KEY = "coresearch.demo.draft.v1";
 // Rough estimate: 12pt Times New Roman, 1" margins, 1.5 line spacing ≈ 320 words/page.
 const WORDS_PER_PAGE = 320;

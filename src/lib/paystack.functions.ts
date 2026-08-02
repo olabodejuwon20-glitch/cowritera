@@ -6,36 +6,36 @@ import { z } from "zod";
 export const PROJECT_PASS_KOBO = 350_000; // ₦3,500
 
 async function computeExpectedAmountKobo(
+  db: any,
   code: string | null | undefined,
 ): Promise<{ amount_kobo: number; coupon_id: string | null }> {
   const base = PROJECT_PASS_KOBO;
   if (!code || !code.trim()) return { amount_kobo: base, coupon_id: null };
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: coupon, error } = await supabaseAdmin
-    .from("coupons")
-    .select("id, type, discount_percent, discount_amount_kobo, active, expires_at, max_uses, uses")
-    .ilike("code", code.trim())
-    .maybeSingle();
+
+  // Coupon details are resolved by a security-definer database routine, so no
+  // coupon rows are exposed to clients and no privileged server key is needed.
+  const { data: quote, error } = await db.rpc("coupon_quote", { _code: code.trim() });
   if (error) throw new Error(error.message);
-  if (!coupon || !coupon.active) return { amount_kobo: base, coupon_id: null };
-  if (coupon.expires_at && new Date(coupon.expires_at as string).getTime() < Date.now()) {
-    return { amount_kobo: base, coupon_id: null };
-  }
-  if (coupon.max_uses != null && (coupon.uses ?? 0) >= coupon.max_uses) {
-    return { amount_kobo: base, coupon_id: null };
-  }
-  if (coupon.type === "full_unlock") {
+  const c = (quote ?? {}) as {
+    valid?: boolean;
+    id?: string;
+    type?: string;
+    discount_percent?: number | null;
+    discount_amount_kobo?: number | null;
+  };
+  if (!c.valid) return { amount_kobo: base, coupon_id: null };
+  if (c.type === "full_unlock") {
     // Full-unlock codes should be redeemed via redeemCoupon, not through checkout.
-    return { amount_kobo: base, coupon_id: coupon.id as string };
+    return { amount_kobo: base, coupon_id: c.id ?? null };
   }
   let amount = base;
-  if (coupon.discount_percent) {
-    amount = Math.round(amount * (1 - Number(coupon.discount_percent) / 100));
-  } else if (coupon.discount_amount_kobo) {
-    amount = amount - Number(coupon.discount_amount_kobo);
+  if (c.discount_percent) {
+    amount = Math.round(amount * (1 - Number(c.discount_percent) / 100));
+  } else if (c.discount_amount_kobo) {
+    amount = amount - Number(c.discount_amount_kobo);
   }
-  amount = Math.max(10_000, amount); // never below ₦100
-  return { amount_kobo: amount, coupon_id: coupon.id as string };
+  amount = Math.max(10_000, amount); // never below NGN 100
+  return { amount_kobo: amount, coupon_id: c.id ?? null };
 }
 
 const InitInput = z.object({
@@ -66,7 +66,7 @@ export const initPayment = createServerFn({ method: "POST" })
     if (!paper) throw new Error("Paper not found");
     if (paper.paid) return { already_paid: true as const };
 
-    const { amount_kobo } = await computeExpectedAmountKobo(data.coupon_code ?? null);
+    const { amount_kobo } = await computeExpectedAmountKobo(supabase, data.coupon_code ?? null);
 
     const callback_url = data.callback_url ?? "";
 
@@ -167,8 +167,8 @@ export const verifyPayment = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
 
       // Credit an ambassador commission only after a verified payment.
-      const { creditReferralOnVerifiedPayment } = await import("./referrals.server");
-      await creditReferralOnVerifiedPayment(userId).catch(() => {});
+      // Credit the referring ambassador (idempotent, verified inside the database).
+      await supabase.rpc("credit_referral_for_user", { _user_id: userId });
     }
     return { paid: paidOk };
   });
