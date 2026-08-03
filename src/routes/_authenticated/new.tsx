@@ -11,7 +11,8 @@ import {
   cleanDetails,
   type ProjectDetails,
 } from "@/components/project-details-form";
-import { AlertTriangle, Loader2, Ticket } from "lucide-react";
+import { AlertTriangle, Loader2, Ticket, Check, Pencil } from "lucide-react";
+import { CoverPreview } from "@/components/cover-preview";
 
 export const Route = createFileRoute("/_authenticated/new")({
   head: () => ({
@@ -36,9 +37,15 @@ function NewPaperPage() {
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  const [stage, setStage] = useState<"details" | "confirm">("details");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (stage === "details") {
+      setStage("confirm");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
@@ -119,15 +126,34 @@ function NewPaperPage() {
               <span className="mt-1 block text-xs text-muted-foreground">Choose carefully — you cannot swap this for a completely different topic later.</span>
             </label>
 
-            <div className="rounded-2xl border p-3">
-              <div className="text-sm font-medium">Project & cover page details</div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                These appear on your cover page and in every export. You can edit them later.
-              </p>
-              <div className="mt-3">
-                <ProjectDetailsFields value={details} onChange={setDetails} />
+            {stage === "details" ? (
+              <div className="rounded-2xl border p-3">
+                <div className="text-sm font-medium">Project & cover page details</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  These appear on your cover page and in every export. You will confirm the cover page next.
+                </p>
+                <div className="mt-3">
+                  <ProjectDetailsFields value={details} onChange={setDetails} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-2xl border p-3">
+                <div className="text-sm font-medium">Check your cover page</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This is exactly how your cover page will be exported. Confirm it, or go back and edit.
+                </p>
+                <div className="mt-3 rounded-2xl border bg-background p-4 text-[13px] leading-relaxed">
+                  <CoverPreview topic={topic} details={details} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStage("details")}
+                  className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border text-sm active:bg-primary-soft"
+                >
+                  <Pencil className="h-4 w-4" /> Edit details
+                </button>
+              </div>
+            )}
 
             <label className="block">
               <span className="text-sm font-medium">Have a code?</span>
@@ -153,8 +179,8 @@ function NewPaperPage() {
               disabled={busy || topic.trim().length < 4}
               className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-medium text-primary-foreground transition active:scale-[0.98] disabled:opacity-60"
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              Continue to payment (₦3,500)
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : stage === "confirm" ? <Check className="h-4 w-4" /> : null}
+              {stage === "details" ? "Preview cover page" : "Looks good — continue to payment (₦3,500)"}
             </button>
           </form>
       </Card>

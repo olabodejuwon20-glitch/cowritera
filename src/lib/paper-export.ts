@@ -1,6 +1,8 @@
 import { demoProject } from "./demo-content";
 import { defaultDraft, emptyDraft, type PaperDraft } from "./paper-draft";
 import {
+  formatGroupName,
+  splitMemberName,
   sanitizeForDocx,
   sanitizeForPdf,
   type ExportCover,
@@ -16,10 +18,7 @@ type Row = { sn: string; surname: string; other: string; matric: string; role: s
 
 function splitName(m: ExportMember): { surname: string; other: string } {
   if (m.surname || m.otherName) return { surname: m.surname ?? "", other: m.otherName ?? "" };
-  const parts = String(m.name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { surname: "", other: "" };
-  if (parts.length === 1) return { surname: parts[0], other: "" };
-  return { surname: parts[parts.length - 1], other: parts.slice(0, -1).join(" ") };
+  return splitMemberName(String(m.name ?? ""));
 }
 
 /** True only for the downloadable sample paper (no user payload at all). */
@@ -161,7 +160,7 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
     coverBlock.push(p([cover.courseCode, cover.courseTitle].filter(Boolean).join(" — "), { align: AlignmentType.CENTER }));
   }
   coverBlock.push(gap(300));
-  if (cover.groupName) coverBlock.push(p(`SUBMITTED BY: ${cover.groupName}`, { bold: true, align: AlignmentType.CENTER }));
+  if (cover.groupName) coverBlock.push(p(`SUBMITTED BY: ${formatGroupName(cover.groupName)}`, { bold: true, align: AlignmentType.CENTER }));
   if (membersTable) {
     coverBlock.push(gap(200));
     coverBlock.push(membersTable);
@@ -336,7 +335,7 @@ export async function buildPdf(input?: ExportInput): Promise<Uint8Array> {
   if (d.topic) drawCentered(d.topic.toUpperCase(), { font: bold, size: 13 });
   if (cover.courseCode || cover.courseTitle) drawCentered([cover.courseCode, cover.courseTitle].filter(Boolean).join(" - "));
   y -= 18;
-  if (cover.groupName) drawCentered(`SUBMITTED BY: ${cover.groupName}`, { font: bold });
+  if (cover.groupName) drawCentered(`SUBMITTED BY: ${formatGroupName(cover.groupName)}`, { font: bold });
   y -= 12;
 
   if (rows.length) {
