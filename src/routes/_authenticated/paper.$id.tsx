@@ -12,6 +12,8 @@ import {
 import { MobileAppLayout, Breadcrumbs, StatusBanner, Skeleton } from "@/components/mobile-app-layout";
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
+import { CoverPreview } from "@/components/cover-preview";
+import { buildSubmissionLine } from "@/lib/export-types";
 import {
   ProjectDetailsFields,
   detailsFromProject,
@@ -446,46 +448,7 @@ function SheetRow({ icon: Icon, label, onClick }: { icon: typeof Menu; label: st
 function CoverPage({
   topic, project, content,
 }: { topic: string; project: Record<string, unknown>; content: string }) {
-  const d = detailsFromProject(project);
-  const members = d.members.filter((m) => m.name || m.matric);
-  const line = (v: string, cls = "") => (v ? <div className={cls}>{v}</div> : null);
-
-  return (
-    <div className="text-center leading-relaxed">
-      {line(d.institution, "font-bold uppercase")}
-      {line(d.faculty, "uppercase")}
-      {line(d.department, "uppercase")}
-      <div className="mt-8 font-bold uppercase">{topic}</div>
-      {line([d.course_code, d.course_title].filter(Boolean).join(" — "), "mt-6 uppercase")}
-      {line(d.group_name, "mt-6 font-semibold uppercase")}
-
-      {members.length > 0 && (
-        <table className="mx-auto mt-6 w-full border-collapse text-left">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1 text-center">S/N</th>
-              <th className="border px-2 py-1">Name</th>
-              <th className="border px-2 py-1">Matric No.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m, i) => (
-              <tr key={i}>
-                <td className="border px-2 py-1 text-center">{i + 1}</td>
-                <td className="border px-2 py-1">{m.name}</td>
-                <td className="border px-2 py-1">{m.matric}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {line(d.lecturer_name ? `LECTURER: ${d.lecturer_name}` : "", "mt-8 uppercase")}
-      {line(d.session, "mt-2")}
-      {line(d.submission_date, "mt-2")}
-      {content ? <div className="mt-8 whitespace-pre-wrap text-left">{content}</div> : null}
-    </div>
-  );
+  return <CoverPreview topic={topic} details={detailsFromProject(project)} extra={content} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -692,29 +655,52 @@ function ProjectInfo({ paperId, project }: { paperId: string; project: Record<st
   const qc = useQueryClient();
   const update = useServerFn(updateProject);
   const [form, setForm] = useState<ProjectDetails>(() => detailsFromProject(project));
+  const [editing, setEditing] = useState(false);
   const m = useMutation({
     mutationFn: () => update({ data: { id: paperId, project: cleanDetails(form) } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["paper", paperId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["paper", paperId] });
+      setEditing(false);
+    },
   });
 
   return (
     <div className="h-full overflow-y-auto px-4 py-5">
       <div className="rounded-3xl border bg-card p-4">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <GraduationCap className="h-4 w-4 text-primary" /> Project information
+          <GraduationCap className="h-4 w-4 text-primary" /> Cover page
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">Used on your cover page and in every export.</p>
-        <div className="mt-4">
-          <ProjectDetailsFields value={form} onChange={setForm} />
-        </div>
-        <button
-          onClick={() => { tap(); m.mutate(); }}
-          disabled={m.isPending}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-medium text-primary-foreground active:scale-[0.98] disabled:opacity-60 transition"
-        >
-          {m.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          {m.isSuccess ? "Saved" : "Save details"}
-        </button>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Generated from your project details. Check it, and edit anything that is not right.
+        </p>
+
+        {editing ? (
+          <>
+            <div className="mt-4">
+              <ProjectDetailsFields value={form} onChange={setForm} />
+            </div>
+            <button
+              onClick={() => { tap(); m.mutate(); }}
+              disabled={m.isPending}
+              className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-medium text-primary-foreground active:scale-[0.98] disabled:opacity-60 transition"
+            >
+              {m.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Save cover page
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="mt-4 rounded-2xl border bg-background p-4 text-[13px] leading-relaxed">
+              <CoverPreview topic={String(project.topic ?? "")} details={form} />
+            </div>
+            <button
+              onClick={() => { tap(); setEditing(true); }}
+              className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border text-sm active:bg-primary-soft"
+            >
+              Edit cover page details
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -811,9 +797,13 @@ function ExportStep({
     const rawMembers = Array.isArray(project.members) ? (project.members as any[]) : [];
     return {
       topic: paper.topic,
-      submissionLine: str("course_title")
-        ? `A term paper submitted in partial fulfilment of the requirements for ${str("course_code") ?? ""} ${str("course_title")}`.trim()
-        : "",
+      submissionLine: buildSubmissionLine({
+        courseCode: str("course_code") ?? paper.course_code,
+        courseTitle: str("course_title"),
+        lecturer: str("lecturer_name"),
+        department: str("department"),
+        institution: str("institution"),
+      }),
       cover: {
         institution: str("institution") ?? "",
         faculty: str("faculty") ?? "",
