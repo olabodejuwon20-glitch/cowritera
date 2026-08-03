@@ -4,16 +4,8 @@ import { FileText, FileType2, Download, Loader2 } from "lucide-react";
 type Kind = "docx" | "pdf";
 
 async function downloadSample(kind: Kind) {
-  const res = await fetch(`/api/export/${kind}`);
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Co-Research-AI-Sample-Term-Paper.${kind}`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const { downloadPaper } = await import("@/lib/export-client");
+  await downloadPaper(kind, `Co-Research-AI-Sample-Term-Paper.${kind}`);
 }
 
 /**

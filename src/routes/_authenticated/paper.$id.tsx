@@ -850,19 +850,11 @@ function ExportStep({
     tap(12);
     setBusy(kind);
     try {
-      const res = await fetch(`/api/export/${kind}`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(draft),
-      });
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${paper.course_code || "Term"}-Paper.${kind}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const { downloadPaper } = await import("@/lib/export-client");
+      await downloadPaper(kind, `${paper.course_code || "Term"}-Paper.${kind}`, draft);
       void notify("Export ready", `Your ${kind.toUpperCase()} has been downloaded.`);
+    } catch (e) {
+      void notify("Export failed", (e as Error).message);
     } finally {
       setBusy(null);
     }
