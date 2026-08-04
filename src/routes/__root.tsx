@@ -15,6 +15,7 @@ import { registerPWA } from "../lib/pwa";
 import { setupOfflineCache } from "../lib/offline-cache";
 import { setupNativeShell } from "../lib/native";
 import { Toaster } from "@/components/ui/sonner";
+import FinalizePopup from "@/components/finalize-popup";
 
 
 
@@ -99,8 +100,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
       { name: "twitter:description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9cfa246e-91ef-45e0-aac7-7dfe32621cfa/id-preview-abdab258--75187f9a-a85d-46c0-9fc3-57d5763ec607.lovable.app-1785291410728.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9cfa246e-91ef-45e0-aac7-7dfe32621cfa/id-preview-abdab258--75187f9a-a85d-46c0-9fc3-57d5763ec607.lovable.app-1785291410728.png" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9cfa246e-91ef-45e0-aac7-7dfe32621cfa/id-preview-abdab258--75187f9a-a85d-46c0-9fc3-57d5763ec607.lovable.[...]" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9cfa246e-91ef-45e0-aac7-7dfe32621cfa/id-preview-abdab258--75187f9a-a85d-46c0-9fc3-57d5763ec607.lovable[...]" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -149,8 +150,8 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <FinalizePopup />
       <Toaster position="top-center" richColors closeButton={false} />
     </QueryClientProvider>
   );
 }
-
