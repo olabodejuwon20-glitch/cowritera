@@ -24,5 +24,24 @@ export async function downloadPaper(kind: Kind, filename: string, input?: Export
   document.body.appendChild(a);
   a.click();
   a.remove();
+
+  // Determine whether this was the sample/demo export (no user payload)
+  const isSample = !input || Object.keys(input).length === 0;
+
+  // Revoke the object URL shortly after
   setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+  // Emit a global event so UI code can react (show a finalize popup, share links, etc.)
+  try {
+    if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") {
+      const ev = new CustomEvent("cowritera:exportFinished", {
+        detail: { kind, filename: a.download, isSample },
+      });
+      window.dispatchEvent(ev);
+    }
+  } catch (e) {
+    // Non-fatal: don't block the download flow for event dispatch errors
+    // eslint-disable-next-line no-console
+    console.warn("failed to emit exportFinished event", e);
+  }
 }
