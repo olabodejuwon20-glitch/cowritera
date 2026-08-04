@@ -12,6 +12,7 @@ import { amIAdmin } from "@/lib/admin.functions";
 import { subscribeOutbox, tap } from "@/lib/offline";
 import { useOnline } from "@/lib/use-pwa";
 import { SideDrawer } from "@/components/sheets";
+import { haptic } from "@/lib/native";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
