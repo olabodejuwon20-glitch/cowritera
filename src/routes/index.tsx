@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   Sparkles, FileText, ShieldCheck, Wand2, BookOpen, Download,
   ArrowRight, Check, GraduationCap,
@@ -6,6 +7,9 @@ import {
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { SampleExportButtons, SampleExportLinks } from "@/components/sample-export";
 import { useRedirectWhenAuthed } from "@/lib/auth";
+import { hasOnboarded } from "@/lib/onboarding";
+import { isNativeApp } from "@/lib/native";
+import { isStandalone } from "@/lib/pwa";
 
 export const Route = createFileRoute("/")({
   head: () => ({
