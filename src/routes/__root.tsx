@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerPWA } from "../lib/pwa";
 import { setupOfflineCache } from "../lib/offline-cache";
+import { setupNativeShell } from "../lib/native";
 import { Toaster } from "@/components/ui/sonner";
 
 
