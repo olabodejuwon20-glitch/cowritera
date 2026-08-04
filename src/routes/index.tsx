@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   Sparkles, FileText, ShieldCheck, Wand2, BookOpen, Download,
   ArrowRight, Check, GraduationCap,
@@ -6,6 +7,9 @@ import {
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { SampleExportButtons, SampleExportLinks } from "@/components/sample-export";
 import { useRedirectWhenAuthed } from "@/lib/auth";
+import { hasOnboarded } from "@/lib/onboarding";
+import { isNativeApp } from "@/lib/native";
+import { isStandalone } from "@/lib/pwa";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +27,15 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const { redirecting } = useRedirectWhenAuthed("/dashboard");
+  const navigate = useNavigate();
+
+  // First run on a phone (or in the installed app): show the onboarding tour.
+  useEffect(() => {
+    if (hasOnboarded()) return;
+    const phone = window.matchMedia("(max-width: 767px)").matches;
+    if (phone || isNativeApp() || isStandalone()) navigate({ to: "/welcome", replace: true });
+  }, [navigate]);
+
   if (redirecting) return null;
   return (
     <div className="min-h-screen flex flex-col">
