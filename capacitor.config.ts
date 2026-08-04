@@ -33,7 +33,6 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: "native",
-砂: undefined,
     },
   },
 };
