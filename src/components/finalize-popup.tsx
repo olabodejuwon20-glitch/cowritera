@@ -42,7 +42,8 @@ export default function FinalizePopup() {
     }
   };
 
-  const message = `Hi — I’ve just finished my Co-Research project and exported \"${filename ?? "project"}\". I’d like to share it with you.`;
+  // Updated messaging per request
+  const message = `Your Export is ready. Send us a DM on WhatsApp to finalize your project. Exported file: "${filename ?? "project"}"`;
   const waHref = `${WHATSAPP_LINK}?text=${encodeURIComponent(message)}`;
 
   return (
@@ -55,7 +56,7 @@ export default function FinalizePopup() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Finalize your project</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Your export is ready. You can message me on WhatsApp to send the project.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Your Export is ready. Send us a DM on WhatsApp to finalize your project.</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground rounded-full p-2">
             <X className="h-4 w-4" />
