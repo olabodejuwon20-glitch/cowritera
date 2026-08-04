@@ -139,6 +139,7 @@ function RootComponent() {
   useEffect(() => {
     void registerPWA();
     void setupOfflineCache(queryClient);
+    void setupNativeShell();
   }, [queryClient]);
 
 
