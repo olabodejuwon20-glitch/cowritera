@@ -328,8 +328,8 @@ function BottomTabBar() {
             <Link
               to={"/new" as never}
               aria-label="New project"
-              onClick={() => tap(12)}
-              className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elegant)] transition-transform active:scale-90"
+              onClick={() => void haptic("medium")}
+              className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elegant)] transition-transform duration-150 active:scale-90"
             >
               <Plus className="h-6 w-6" strokeWidth={2.6} />
             </Link>
@@ -349,14 +349,29 @@ function Tab({
   return (
     <Link
       to={to as never}
-      onClick={() => tap()}
-      className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 transition-transform active:scale-95"
+      onClick={() => void haptic("light")}
+      className="group flex h-full min-w-0 flex-col items-center justify-center px-1"
     >
-      <Icon
-        className={cn("h-[22px] w-[22px] transition-colors", active ? "text-primary" : "text-muted-foreground")}
-        strokeWidth={active ? 2.4 : 1.8}
-      />
-      <span className={cn("truncate text-[10px] leading-none", active ? "font-semibold text-primary" : "text-muted-foreground")}>
+      <span
+        className={cn(
+          "grid h-8 w-12 place-items-center rounded-2xl transition-all duration-200 group-active:scale-90",
+          active ? "bg-primary-soft" : "bg-transparent",
+        )}
+      >
+        <Icon
+          className={cn(
+            "h-[21px] w-[21px] transition-all duration-200",
+            active ? "-translate-y-px text-primary" : "text-muted-foreground",
+          )}
+          strokeWidth={active ? 2.4 : 1.8}
+        />
+      </span>
+      <span
+        className={cn(
+          "mt-0.5 truncate text-[10px] leading-none transition-colors",
+          active ? "font-semibold text-primary" : "text-muted-foreground",
+        )}
+      >
         {label}
       </span>
     </Link>
