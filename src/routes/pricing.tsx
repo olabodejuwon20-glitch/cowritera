@@ -10,6 +10,30 @@ export const Route = createFileRoute("/pricing")({
       { name: "description", content: "One-time ₦3,500 Project Pass. Unlimited edits, unlimited regeneration, Word & PDF export. Free downloadable sample." },
       { property: "og:title", content: "Pricing — Co-Research AI" },
       { property: "og:description", content: "One-time Project Pass. No token limits. Unlimited edits and exports." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://co-research.lovable.app/pricing" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://co-research.lovable.app/pricing" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: "Co-Research AI Project Pass",
+          description:
+            "One-time pass unlocking one academic project with unlimited AI generation, edits and Word/PDF exports.",
+          brand: { "@type": "Brand", name: "Co-Research AI" },
+          offers: {
+            "@type": "Offer",
+            price: "3500",
+            priceCurrency: "NGN",
+            availability: "https://schema.org/InStock",
+            url: "https://co-research.lovable.app/pricing",
+          },
+        }),
+      },
     ],
   }),
   component: PricingPage,

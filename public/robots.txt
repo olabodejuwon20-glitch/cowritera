@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /r/
+
+Sitemap: https://co-research.lovable.app/sitemap.xml
