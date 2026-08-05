@@ -165,7 +165,12 @@ function PaperPage() {
   // Verify Paystack when returning from checkout
   useEffect(() => {
     const ref = search.reference ?? search.trxref;
-    if (!ref) return;
+    if (!ref) {
+      // Returned from checkout without a reference — refresh so a webhook/late
+      // confirmation still unlocks the paper.
+      if (search.paid) qc.invalidateQueries({ queryKey: ["paper", id] });
+      return;
+    }
     setVerifyMsg("Verifying payment…");
     verify({ data: { reference: ref, paper_id: id } })
       .then((r) => {
@@ -174,7 +179,7 @@ function PaperPage() {
         navigate({ to: "/paper/$id", params: { id }, search: {}, replace: true });
       })
       .catch((e) => setVerifyMsg((e as Error).message));
-  }, [search.reference, search.trxref, id, verify, qc, navigate]);
+  }, [search.paid, search.reference, search.trxref, id, verify, qc, navigate]);
 
   if (paperQ.isLoading) {
     return (
@@ -889,8 +894,14 @@ function ExportStep({
 /* Paywall                                                             */
 /* ------------------------------------------------------------------ */
 
+const PASS_KOBO = 350_000;
+const naira = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
+
 function Paywall({ id }: { id: string }) {
   const [sheet, setSheet] = useState(false);
+  const [coupon, setCoupon] = useState<{ code: string; amountKobo: number } | null>(null);
+  const amountKobo = coupon?.amountKobo ?? PASS_KOBO;
+
   return (
     <>
       <button
@@ -906,50 +917,78 @@ function Paywall({ id }: { id: string }) {
       </button>
 
       <BottomSheet open={sheet} onOpenChange={setSheet} title="Unlock this project" description="One pass, unlimited generation and edits for this topic.">
-        <PayButton id={id} />
+        <div className="mb-4 flex items-baseline justify-between rounded-2xl border bg-surface px-4 py-3">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Total due</span>
+          <span className="flex items-baseline gap-2">
+            {coupon && <s className="text-xs text-muted-foreground">{naira(PASS_KOBO)}</s>}
+            <strong className="text-lg tabular-nums">{naira(amountKobo)}</strong>
+          </span>
+        </div>
+
+        <PayButton id={id} amountKobo={amountKobo} couponCode={coupon?.code ?? null} />
         <div className="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wide text-muted-foreground">
           <span className="h-px flex-1 bg-border" /> or use a code <span className="h-px flex-1 bg-border" />
         </div>
-        <RedeemCoupon paperId={id} />
+        <RedeemCoupon paperId={id} onDiscount={setCoupon} />
       </BottomSheet>
     </>
   );
 }
 
-function PayButton({ id }: { id: string }) {
-  const [busy, setBusy] = useState(false);
+function usePay(id: string) {
   const init = useServerFn(initPayment);
-  async function pay() {
+  return async function pay(couponCode: string | null) {
+    const origin = window.location.origin;
+    const res = await init({
+      data: {
+        paper_id: id,
+        callback_url: `${origin}/paper/${id}?paid=1`,
+        ...(couponCode ? { coupon_code: couponCode } : {}),
+      },
+    });
+    if ("authorization_url" in res && res.authorization_url) {
+      window.location.href = res.authorization_url;
+      return true;
+    }
+    return false;
+  };
+}
+
+function PayButton({ id, amountKobo, couponCode }: { id: string; amountKobo: number; couponCode: string | null }) {
+  const [busy, setBusy] = useState(false);
+  const pay = usePay(id);
+  async function onPay() {
     setBusy(true);
     try {
-      const origin = window.location.origin;
-      const res = await init({
-        data: { paper_id: id, callback_url: `${origin}/paper/${id}?paid=1` },
-      });
-      if ("authorization_url" in res && res.authorization_url) {
-        window.location.href = res.authorization_url;
-        return;
-      }
-      setBusy(false);
-    } catch {
+      const ok = await pay(couponCode);
+      if (!ok) setBusy(false);
+    } catch (e) {
+      toast.error((e as Error).message || "Could not start checkout");
       setBusy(false);
     }
   }
   return (
     <button
-      onClick={pay}
+      onClick={onPay}
       disabled={busy}
       className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-medium text-primary-foreground active:scale-[0.98] disabled:opacity-60 transition"
     >
       {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-      Pay ₦3,500 with Paystack
+      Pay {naira(amountKobo)} with Paystack
     </button>
   );
 }
 
-function RedeemCoupon({ paperId }: { paperId: string }) {
+function RedeemCoupon({
+  paperId,
+  onDiscount,
+}: {
+  paperId: string;
+  onDiscount: (c: { code: string; amountKobo: number } | null) => void;
+}) {
   const qc = useQueryClient();
   const redeem = useServerFn(redeemCoupon);
+  const pay = usePay(paperId);
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -960,16 +999,24 @@ function RedeemCoupon({ paperId }: { paperId: string }) {
     setBusy(true); setMsg(null); setErr(null);
     try {
       const r = await redeem({ data: { code: code.trim(), paper_id: paperId } });
-      if (r.type === "full_unlock" || r.unlocked) {
+      if (r.type === "full_unlock" || (r as any).unlocked) {
+        onDiscount(null);
         setMsg("Code accepted. Project unlocked.");
+        toast.success("Project unlocked");
         qc.invalidateQueries({ queryKey: ["paper", paperId] });
       } else if (r.type === "discount") {
-        const off = r.discount_percent
-          ? `${r.discount_percent}% off`
-          : `₦${((r.discount_amount_kobo ?? 0) / 100).toLocaleString()} off`;
-        setMsg(`Code applied: ${off}. Continue with Paystack to finish.`);
+        let amount = PASS_KOBO;
+        if (r.discount_percent) amount = Math.round(amount * (1 - Number(r.discount_percent) / 100));
+        else if (r.discount_amount_kobo) amount = amount - Number(r.discount_amount_kobo);
+        amount = Math.max(10_000, amount);
+        onDiscount({ code: code.trim(), amountKobo: amount });
+        setMsg(`Code applied — new total ${naira(amount)}. Opening checkout…`);
+        toast.success(`Coupon applied — you now pay ${naira(amount)}`);
+        await pay(code.trim());
+        return;
       }
     } catch (e2) {
+      onDiscount(null);
       setErr((e2 as Error).message);
     } finally {
       setBusy(false);
@@ -991,7 +1038,7 @@ function RedeemCoupon({ paperId }: { paperId: string }) {
         disabled={busy || !code.trim()}
         className="mt-2 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border text-sm active:bg-primary-soft disabled:opacity-60"
       >
-        {busy && <Loader2 className="h-4 w-4 animate-spin" />} Redeem code
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />} Apply code
       </button>
       {msg && <div className="mt-2 text-xs text-primary">{msg}</div>}
       {err && <div className="mt-2 text-xs text-destructive">{err}</div>}

@@ -16,6 +16,7 @@ import { setupOfflineCache } from "../lib/offline-cache";
 import { setupNativeShell } from "../lib/native";
 import { Toaster } from "@/components/ui/sonner";
 import FinalizePopup from "@/components/finalize-popup";
+import SupportButton from "@/components/support-button";
 
 
 
@@ -151,6 +152,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <FinalizePopup />
+      <SupportButton />
       <Toaster position="top-center" richColors closeButton={false} />
     </QueryClientProvider>
   );

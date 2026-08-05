@@ -26,6 +26,31 @@ export const Route = createFileRoute("/_authenticated/ambassador")({
   component: AmbassadorPage,
 });
 
+/** Download a marketing asset to the device instead of just opening it. */
+async function downloadResource(url: string, title: string) {
+  const safe = (title || "resource").replace(/[^\w\-. ]+/g, "_").trim() || "resource";
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Download failed");
+    const blob = await res.blob();
+    const ext = (new URL(url, window.location.origin).pathname.split(".").pop() || "").slice(0, 5);
+    const name = /\.[a-z0-9]{2,5}$/i.test(safe) || !ext ? safe : `${safe}.${ext}`;
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 4000);
+    toast.success("Download started");
+  } catch {
+    // Cross-origin assets can block fetch — fall back to opening the file.
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win) window.location.href = url;
+  }
+}
+
 function useCountdown(target?: string | null) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -249,9 +274,12 @@ function AmbassadorPage() {
                       <Share2 className="h-3.5 w-3.5" /> Share
                     </button>
                     {(r.signed_url || r.url) && (
-                      <a href={r.signed_url || r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs hover:bg-surface">
-                        <Download className="h-3.5 w-3.5" /> Open
-                      </a>
+                      <button
+                        onClick={() => void downloadResource(String(r.signed_url || r.url), r.title)}
+                        className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs hover:bg-surface"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </button>
                     )}
                   </div>
                 </Card>
