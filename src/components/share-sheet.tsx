@@ -45,11 +45,29 @@ export function ShareSheet({
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(message);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = message;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
       toast.success("Message copied");
     } catch {
       toast.error("Could not copy — long-press to copy manually.");
     }
+  }
+
+  function openChannel(href: string) {
+    // Preview/webview environments can block target="_blank"; fall back to a
+    // same-tab navigation so sharing always works.
+    const win = window.open(href, "_blank", "noopener,noreferrer");
+    if (!win) window.location.href = href;
   }
 
   async function nativeShare() {
