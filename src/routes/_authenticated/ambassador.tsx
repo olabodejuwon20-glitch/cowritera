@@ -249,9 +249,12 @@ function AmbassadorPage() {
                       <Share2 className="h-3.5 w-3.5" /> Share
                     </button>
                     {(r.signed_url || r.url) && (
-                      <a href={r.signed_url || r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs hover:bg-surface">
-                        <Download className="h-3.5 w-3.5" /> Open
-                      </a>
+                      <button
+                        onClick={() => void downloadResource(String(r.signed_url || r.url), r.title)}
+                        className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs hover:bg-surface"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </button>
                     )}
                   </div>
                 </Card>
