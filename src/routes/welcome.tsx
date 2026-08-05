@@ -124,7 +124,7 @@ function Welcome() {
               <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 {s.eyebrow}
               </div>
-              <h1 className="mt-2 max-w-sm text-[28px] font-semibold leading-tight">{s.title}</h1>
+              <h2 className="mt-2 max-w-sm text-[28px] font-semibold leading-tight">{s.title}</h2>
               <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
             </section>
           ))}

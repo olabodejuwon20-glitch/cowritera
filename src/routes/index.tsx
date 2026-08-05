@@ -14,16 +14,41 @@ import { isStandalone } from "@/lib/pwa";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
-      { name: "description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
-      { property: "og:title", content: "Co-Research AI — Lecturer-compliant term papers, without the panic" },
-      { property: "og:description", content: "AI academic co-pilot for Nigerian students. Generate professionally structured, lecturer-compliant GNS 102 term papers in minutes." },
+      { title: "Co-Research AI — GNS 102 term papers in minutes" },
+      { name: "description", content: "Turn your topic, group members and lecturer instructions into a submission-ready GNS 102 term paper with cover page, references and Word/PDF export." },
+      { property: "og:title", content: "Write your GNS 102 term paper in minutes" },
+      { property: "og:description", content: "One ₦3,500 Project Pass: unlimited AI drafting, lecturer-rule compliance, formatted cover page and Word/PDF exports." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://co-research.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://co-research.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Co-Research AI",
+              url: "https://co-research.lovable.app/",
+              description: "AI academic writing co-pilot for Nigerian undergraduates.",
+            },
+            {
+              "@type": "WebSite",
+              name: "Co-Research AI",
+              url: "https://co-research.lovable.app/",
+              description: "Generate lecturer-compliant GNS 102 term papers with AI.",
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Landing,
 });
+
 
 function Landing() {
   const { redirecting } = useRedirectWhenAuthed("/dashboard");

@@ -35,8 +35,10 @@ function ReferralLanding() {
     <div className="min-h-screen grid place-items-center px-6 text-center">
       <div className="space-y-3">
         <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+        <h1 className="text-lg font-semibold">You've been invited to Co-Research AI</h1>
         <p className="text-sm text-muted-foreground">Taking you to Co-Research AI…</p>
       </div>
     </div>
   );
+
 }
