@@ -16,6 +16,7 @@ import { setupOfflineCache } from "../lib/offline-cache";
 import { setupNativeShell } from "../lib/native";
 import { Toaster } from "@/components/ui/sonner";
 import FinalizePopup from "@/components/finalize-popup";
+import SupportButton from "@/components/support-button";
 
 
 
