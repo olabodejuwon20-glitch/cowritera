@@ -105,16 +105,15 @@ export function ShareSheet({
 
         <div className="mt-4 grid grid-cols-4 gap-2">
           {channels.map((c) => (
-            <a
+            <button
               key={c.label}
-              href={c.href}
-              target="_blank"
-              rel="noreferrer"
+              type="button"
+              onClick={() => openChannel(c.href)}
               className="flex flex-col items-center gap-1.5 rounded-2xl border p-3 text-[11px] hover:bg-surface"
             >
               <c.icon className="h-5 w-5 text-primary" />
               {c.label}
-            </a>
+            </button>
           ))}
         </div>
 
