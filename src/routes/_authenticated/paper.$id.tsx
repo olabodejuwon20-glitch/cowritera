@@ -165,7 +165,12 @@ function PaperPage() {
   // Verify Paystack when returning from checkout
   useEffect(() => {
     const ref = search.reference ?? search.trxref;
-    if (!ref) return;
+    if (!ref) {
+      // Returned from checkout without a reference — refresh so a webhook/late
+      // confirmation still unlocks the paper.
+      if (search.paid) qc.invalidateQueries({ queryKey: ["paper", id] });
+      return;
+    }
     setVerifyMsg("Verifying payment…");
     verify({ data: { reference: ref, paper_id: id } })
       .then((r) => {
