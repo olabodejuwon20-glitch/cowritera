@@ -179,7 +179,7 @@ function PaperPage() {
         navigate({ to: "/paper/$id", params: { id }, search: {}, replace: true });
       })
       .catch((e) => setVerifyMsg((e as Error).message));
-  }, [search.reference, search.trxref, id, verify, qc, navigate]);
+  }, [search.paid, search.reference, search.trxref, id, verify, qc, navigate]);
 
   if (paperQ.isLoading) {
     return (
