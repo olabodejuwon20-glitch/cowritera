@@ -4,18 +4,6 @@ import { ChevronDown } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { SampleExportLinks } from "@/components/sample-export";
 
-export const Route = createFileRoute("/faq")({
-  head: () => ({
-    meta: [
-      { title: "FAQ — Co-Research AI" },
-      { name: "description", content: "Answers to common questions about Co-Research AI: pricing, project limits, lecturer compliance, exports and more." },
-      { property: "og:title", content: "FAQ — Co-Research AI" },
-      { property: "og:description", content: "Common questions about Co-Research AI." },
-    ],
-  }),
-  component: FAQPage,
-});
-
 const faqs = [
   { q: "What is Co-Research AI?", a: "Co-Research AI is an academic writing platform that turns your topic, group members and lecturer instructions into a properly structured, submission-ready GNS 102 term paper." },
   { q: "How is this different from ChatGPT?", a: "It's a dedicated academic workspace — not a chatbot. You get a guided project flow, section-by-section regeneration, lecturer compliance checks, cover page generation, and Word/PDF exports formatted to institutional standards." },
@@ -28,6 +16,35 @@ const faqs = [
   { q: "What can I export?", a: "Microsoft Word (.docx) and PDF. Both preserve tables, headings, margins, numbering and references." },
   { q: "Do you store my paper?", a: "Yes, your project stays available throughout the semester so you can revisit and refine it whenever you need." },
 ];
+
+export const Route = createFileRoute("/faq")({
+  head: () => ({
+    meta: [
+      { title: "FAQ — Co-Research AI" },
+      { name: "description", content: "Answers to common questions about Co-Research AI: pricing, project limits, lecturer compliance, exports and more." },
+      { property: "og:title", content: "FAQ — Co-Research AI" },
+      { property: "og:description", content: "Common questions about Co-Research AI." },
+      { property: "og:url", content: "https://co-research.lovable.app/faq" },
+    ],
+    links: [{ rel: "canonical", href: "https://co-research.lovable.app/faq" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }),
+      },
+    ],
+  }),
+  component: FAQPage,
+});
+
 
 function FAQPage() {
   return (
