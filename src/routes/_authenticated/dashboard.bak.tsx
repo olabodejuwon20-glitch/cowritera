@@ -1,14 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileAppLayout, Card, PageTitle, ActionButton, CardSkeleton } from "@/components/mobile-app-layout";
 import { listPapers } from "@/lib/papers.functions";
 import { Plus, FileText, CheckCircle2, Clock } from "lucide-react";
 import { getAmbassadorDashboard } from "@/lib/ambassadors.functions";
-import HeroOnboarding from "@/components/hero-onboarding";
-import HeroWorkspace from "@/components/hero-workspace";
-import QuickActions from "@/components/quick-actions";
-import { useSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -30,7 +26,6 @@ function Dashboard() {
   const { data, isLoading, error } = useQuery({ queryKey: ["papers"], queryFn: () => fetchPapers() });
   const ambFn = useServerFn(getAmbassadorDashboard);
   const ambassador = useQuery({ queryKey: ["my-ambassador"], queryFn: () => ambFn() });
-  const { user } = useSession();
 
   const total = data?.length ?? 0;
   const unlocked = data?.filter((p) => p.paid).length ?? 0;
@@ -65,7 +60,12 @@ function Dashboard() {
         </Link>
       )}
 
-      {/* HERO: show onboarding or workspace depending on papers */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Projects" value={total} />
+        <Stat label="Unlocked" value={unlocked} />
+        <Stat label="Awaiting payment" value={Math.max(0, total - unlocked)} />
+      </div>
+
       {isLoading && (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
@@ -74,53 +74,17 @@ function Dashboard() {
         </ul>
       )}
 
-      {!isLoading && (
-        <>
-          {data && data.length === 0 ? (
-            <>
-              <HeroOnboarding firstName={user?.firstName ?? "Student"} />
-            </>
-          ) : (
-            <>
-              <HeroWorkspace project={data[0]} projects={data} />
-            </>
-          )}
-
-          {/* Quick actions shown under hero */}
-          <QuickActions className="mt-4" />
-
-          {/* If there are projects, show the project cards as before */}
-          {data && data.length > 0 && (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 mt-4">
-              {data.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    to="/paper/$id"
-                    params={{ id: p.id }}
-                    className="block h-full rounded-3xl border bg-card p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-primary/30 active:scale-[0.99]"
-                  >
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="rounded-full bg-primary-soft px-2.5 py-1 font-medium text-primary">{p.course_code}</span>
-                      {p.paid ? (
-                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Unlocked</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Awaiting payment</span>
-                      )}
-                    </div>
-                    <h3 className="mt-3 line-clamp-2 font-medium leading-snug">{p.topic || "Untitled paper"}</h3>
-                    <p className="mt-4 text-xs text-muted-foreground">
-                      Updated {new Date(p.updated_at).toLocaleDateString()}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-
       {error && <Card className="text-sm text-destructive">{(error as Error).message}</Card>}
 
     </MobileAppLayout>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <Card className="py-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-2xl font-semibold">{value}</div>
+    </Card>
   );
 }
