@@ -74,9 +74,15 @@ export const generateSection = createServerFn({ method: "POST" })
 
     const guide = ((paper.project as Record<string, unknown> | null)?.lecturer_guide as string | undefined)?.slice(0, 4000) ?? "";
     const brief = SECTION_PROMPTS[data.section_key] ?? "Write this section of the paper in formal academic prose.";
-    const system =
-      "You are Co-Research AI, an academic writing co-pilot for Nigerian undergraduates producing GNS 102 term papers. The finished paper is typeset in Times New Roman 12pt with 1.5 line spacing and 1-inch margins, and the whole document must not exceed 10 pages (~320 words per page), so keep each section tight and within its share of that budget. Output clean prose — no markdown headings, no bullet symbols — just paragraphs separated by blank lines. Never invent enrollment data or fabricate first-person interviews.";
-    const user = `Topic: ${paper.topic}\nCourse: ${paper.course_code}${guide ? `\nLecturer instructions: ${guide}` : ""}\n\nTask: ${brief}${data.extra ? `\n\nExtra guidance from student: ${data.extra}` : ""}`;
+    const system = [
+      "You are Co-Research AI, an academic writing co-pilot for Nigerian undergraduates producing term papers.",
+      "AUTHORITY ORDER: the lecturer's instructions outrank every other rule here. If the lecturer specifies a length, structure, citation style, tone, chapter names or anything else, follow the lecturer exactly and ignore any conflicting default below. Only when no lecturer instruction covers a point do you fall back to the built-in format.",
+      "BUILT-IN FORMAT (defaults only): Times New Roman 12pt, 1.5 line spacing, 1-inch margins; the whole paper must not exceed 2000 words in total, so budget roughly 200-300 words for this single section unless the lecturer asked for more. Never exceed the lecturer's stated length.",
+      "REFERENCES: every source you cite must be directly about this topic and must actually support the sentence it is attached to. No padding, no off-topic classics, no citations that are not used in the text. Keep in-text citations and the reference list perfectly consistent.",
+      "STYLE: write like a careful human student, not an AI. Vary sentence length and rhythm, use concrete examples, avoid stock AI phrasing (\"in today's fast-paced world\", \"delve\", \"moreover, it is important to note\"), avoid mechanical parallel lists, and never pad.",
+      "Output clean prose — no markdown headings, no bullet symbols — just paragraphs separated by blank lines. Never invent enrollment data or fabricate first-person interviews.",
+    ].join("\n");
+    const user = `Topic: ${paper.topic}\nCourse: ${paper.course_code}${guide ? `\nLECTURER INSTRUCTIONS (highest priority — follow these exactly):\n${guide}` : "\nLecturer instructions: none supplied — use the built-in format."}\n\nTask: ${brief}${data.extra ? `\n\nExtra guidance from student: ${data.extra}` : ""}`;
 
     const output = await callGateway(system, user);
     await supabase.from("ai_generations").insert({
@@ -123,4 +129,56 @@ export const researchNotes = createServerFn({ method: "POST" })
       model: MODEL,
     });
     return { notes: output };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Humanizer                                                           */
+/* ------------------------------------------------------------------ */
+
+const HumanizeInput = z.object({
+  paper_id: z.string().uuid(),
+  section_key: z.string().min(1),
+  content: z.string().min(1).max(40000),
+});
+
+export const humanizeSection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => HumanizeInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: paper, error } = await supabase
+      .from("papers")
+      .select("id, topic, course_code, paid, project")
+      .eq("id", data.paper_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!paper) throw new Error("Paper not found");
+    if (!paper.paid) throw new Error("This project needs a Project Pass before AI editing.");
+
+    const guide =
+      ((paper.project as Record<string, unknown> | null)?.lecturer_guide as string | undefined)?.slice(0, 4000) ?? "";
+
+    const system = [
+      "You are a human academic editor. You rewrite AI-sounding student writing so it reads naturally, like a thoughtful undergraduate wrote it in one sitting.",
+      "Rules: keep every fact, citation, heading number and reference exactly as given — do not add or drop sources. Preserve meaning and length (±10%).",
+      "Vary sentence length and structure. Break robotic parallelism. Remove filler and stock AI phrases. Use plain, specific, confident academic English with occasional natural connectives.",
+      "Do not use markdown, bullets or emoji. Return only the rewritten prose, paragraphs separated by blank lines.",
+      guide ? `The lecturer's instructions override any stylistic default:\n${guide}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const output = await callGateway(system, `Topic: ${paper.topic}\n\nRewrite this section so it reads human and natural:\n\n${data.content}`);
+
+    await supabase.from("ai_generations").insert({
+      user_id: userId,
+      paper_id: paper.id,
+      kind: `humanize:${data.section_key}`,
+      prompt: data.content.slice(0, 4000),
+      output,
+      model: MODEL,
+    });
+
+    return { content: output };
   });
