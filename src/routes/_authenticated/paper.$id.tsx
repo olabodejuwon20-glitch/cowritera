@@ -395,6 +395,7 @@ function PaperPage() {
         step={step}
         paid={paid}
         hasContent={!!content.trim()}
+        content={content}
       />
 
       {/* Edit bottom sheet */}
