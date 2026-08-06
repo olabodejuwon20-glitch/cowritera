@@ -5,12 +5,10 @@ import {
   formatGroupName,
   memberValue,
   normalizeColumns,
-  splitMemberName,
   sanitizeForDocx,
   sanitizeForPdf,
   type ExportCover,
   type ExportInput,
-  type ExportMember,
   type MemberColumn,
 } from "./export-types";
 
@@ -19,11 +17,6 @@ const SIZE = 24; // 12pt half-points
 const TITLE = 26;
 
 type Row = string[];
-
-function splitName(m: ExportMember): { surname: string; other: string } {
-  if (m.surname || m.otherName) return { surname: m.surname ?? "", other: m.otherName ?? "" };
-  return splitMemberName(String(m.name ?? ""));
-}
 
 /** True only for the downloadable sample paper (no user payload at all). */
 function isSampleRequest(input?: ExportInput): boolean {
