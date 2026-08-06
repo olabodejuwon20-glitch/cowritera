@@ -7,6 +7,22 @@ const MIME: Record<Kind, string> = {
   pdf: "application/pdf",
 };
 
+function sanitizeFileName(name: string | undefined | null, kind: Kind, input?: ExportInput) {
+  const raw = String(name ?? "").trim();
+  if (!raw) {
+    // Prefer a sample vs generic name depending on whether this was a user draft
+    const base = input && Object.keys(input).length > 0 ? "Co-Research-AI-Term-Paper" : "Co-Research-AI-Sample-Term-Paper";
+    return `${base}.${kind}`;
+  }
+  // Remove control characters and common filesystem-illegal characters
+  let cleaned = raw.replace(/[\u0000-\u001f<>:\\"/\\\\|?*]+/g, "");
+  // Collapse multiple whitespace to a single space and trim
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  // Ensure it ends with the requested extension exactly once
+  if (!cleaned.toLowerCase().endsWith(`.${kind}`)) cleaned = `${cleaned}.${kind}`;
+  return cleaned;
+}
+
 /**
  * Builds the document in the browser and saves it with the correct extension
  * and MIME type. Generating client-side avoids any chance of a server/CDN
@@ -19,7 +35,9 @@ export async function downloadPaper(kind: Kind, filename: string, input?: Export
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename.endsWith(`.${kind}`) ? filename : `${filename}.${kind}`;
+
+  const outName = sanitizeFileName(filename, kind, input);
+  a.download = outName;
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
