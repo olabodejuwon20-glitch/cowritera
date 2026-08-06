@@ -819,15 +819,22 @@ function ExportStep({
         lecturer: str("lecturer_name") ?? "",
         session: str("session") ?? "",
         date: str("submission_date") ?? "",
+        columns: normalizeColumns(project.columns),
         members: rawMembers
-          .map((m, i) => ({
-            sn: i + 1,
-            name: String((m ?? {}).name ?? ""),
-            matric: String((m ?? {}).matric ?? ""),
-            phone: String((m ?? {}).phone ?? ""),
-            role: String((m ?? {}).role ?? ""),
-          }))
-          .filter((m) => m.name || m.matric || m.phone || m.role),
+          .map((m, i) => {
+            const extraRaw = ((m ?? {}).extra ?? {}) as Record<string, unknown>;
+            const extra: Record<string, string> = {};
+            for (const [k, v] of Object.entries(extraRaw)) extra[k] = String(v ?? "");
+            return {
+              sn: i + 1,
+              name: String((m ?? {}).name ?? ""),
+              matric: String((m ?? {}).matric ?? ""),
+              phone: String((m ?? {}).phone ?? ""),
+              role: String((m ?? {}).role ?? ""),
+              extra,
+            };
+          })
+          .filter((m) => m.name || m.matric || m.phone || m.role || Object.keys(m.extra).length),
       },
       introduction: toParas("introduction"),
       literature: toParas("literature"),
