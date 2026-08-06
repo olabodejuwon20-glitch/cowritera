@@ -8,6 +8,7 @@ export type ExportMember = {
   matric?: string;
   phone?: string;
   role?: string;
+  extra?: Record<string, string>;
 };
 
 export type ExportCover = {
@@ -24,6 +25,7 @@ export type ExportCover = {
   members?: ExportMember[];
   resultsSubtopic?: string;
   discussionSubtopic?: string;
+  columns?: MemberColumn[];
 };
 
 export type ExportInput = Partial<PaperDraft> & { cover?: ExportCover };
@@ -99,4 +101,56 @@ export function splitMemberName(name: string): { surname: string; other: string 
   const parts = value.split(/\s+/).filter(Boolean);
   if (parts.length === 1) return { surname: parts[0], other: "" };
   return { surname: parts[parts.length - 1], other: parts.slice(0, -1).join(" ") };
+}
+
+/* ------------------------------------------------------------------ */
+/* Members table columns (user-configurable)                           */
+/* ------------------------------------------------------------------ */
+
+export type MemberColumn = { key: string; label: string };
+
+export const BASE_COLUMNS: MemberColumn[] = [
+  { key: "surname", label: "SURNAME" },
+  { key: "other", label: "OTHER NAMES" },
+  { key: "matric", label: "MATRIC NO" },
+  { key: "role", label: "ROLE" },
+];
+
+/** Keys derived from the member's full name — not edited directly. */
+export const DERIVED_KEYS = ["surname", "other"];
+
+export function columnKeyFromLabel(label: string): string {
+  return (label ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || `field_${Date.now()}`;
+}
+
+export function normalizeColumns(raw: unknown): MemberColumn[] {
+  if (!Array.isArray(raw)) return [...BASE_COLUMNS];
+  const cols = raw
+    .map((c) => {
+      const o = (c ?? {}) as Record<string, unknown>;
+      const label = String(o.label ?? "").trim();
+      const key = String(o.key ?? columnKeyFromLabel(label)).trim();
+      return key && label ? { key, label } : null;
+    })
+    .filter(Boolean) as MemberColumn[];
+  return cols.length ? cols : [...BASE_COLUMNS];
+}
+
+/** Resolves the printed value of a member for a given column key. */
+export function memberValue(m: ExportMember, key: string): string {
+  if (key === "surname" || key === "other") {
+    const split =
+      m.surname || m.otherName
+        ? { surname: m.surname ?? "", other: m.otherName ?? "" }
+        : splitMemberName(String(m.name ?? ""));
+    return key === "surname" ? split.surname.toUpperCase() : split.other;
+  }
+  if (key === "name") return String(m.name ?? "");
+  if (key === "matric") return String(m.matric ?? "");
+  if (key === "phone") return String(m.phone ?? "");
+  if (key === "role") return String(m.role ?? "");
+  return String((m.extra ?? {})[key] ?? "");
 }
