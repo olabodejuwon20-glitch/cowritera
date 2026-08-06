@@ -20,7 +20,7 @@ import {
   cleanDetails,
   type ProjectDetails,
 } from "@/components/project-details-form";
-import { generateSection, researchNotes } from "@/lib/ai.functions";
+import { generateSection, researchNotes, humanizeSection } from "@/lib/ai.functions";
 import { verifyPayment, initPayment } from "@/lib/paystack.functions";
 import { redeemCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -578,11 +578,12 @@ function EditSheet({
 /* ------------------------------------------------------------------ */
 
 function AiSheet({
-  open, onOpenChange, paperId, step, paid, hasContent,
-}: { open: boolean; onOpenChange: (v: boolean) => void; paperId: string; step: Step; paid: boolean; hasContent: boolean }) {
+  open, onOpenChange, paperId, step, paid, hasContent, content,
+}: { open: boolean; onOpenChange: (v: boolean) => void; paperId: string; step: Step; paid: boolean; hasContent: boolean; content?: string }) {
   const qc = useQueryClient();
   const gen = useServerFn(generateSection);
   const research = useServerFn(researchNotes);
+  const humanize = useServerFn(humanizeSection);
   const save = useServerFn(updateSection);
   const [notes, setNotes] = useState<string | null>(null);
 
@@ -604,7 +605,22 @@ function AiSheet({
     onSuccess: (r) => setNotes(r.notes),
   });
 
-  const busy = genM.isPending || researchM.isPending;
+  const humanM = useMutation({
+    mutationFn: async () => {
+      const text = (content ?? "").trim();
+      if (!text) throw new Error("Write or generate this section first.");
+      const r = await humanize({ data: { paper_id: paperId, section_key: step.key, content: text } });
+      await save({ data: { id: paperId, section_key: step.key, content: r.content } });
+      return r;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["paper", paperId] });
+      void notify("Humanised", `${step.label} now reads naturally.`);
+      onOpenChange(false);
+    },
+  });
+
+  const busy = genM.isPending || researchM.isPending || humanM.isPending;
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title={`AI · ${step.label}`} description={paid ? undefined : "Unlock the Project Pass to use AI."}>
@@ -621,6 +637,17 @@ function AiSheet({
           </span>
         </button>
         <button
+          disabled={!paid || busy || !hasContent}
+          onClick={() => { tap(12); humanM.mutate(); }}
+          className="flex w-full min-h-14 items-center gap-3 rounded-2xl border px-4 text-left text-sm active:bg-primary-soft disabled:opacity-60"
+        >
+          {humanM.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
+          <span>
+            Humanise this section
+            <span className="block text-[11px] text-muted-foreground">Rewrites it to read natural, not AI-generated</span>
+          </span>
+        </button>
+        <button
           disabled={!paid || busy}
           onClick={() => { tap(); researchM.mutate(); }}
           className="flex w-full min-h-14 items-center gap-3 rounded-2xl border px-4 text-left text-sm active:bg-primary-soft disabled:opacity-60"
@@ -633,9 +660,9 @@ function AiSheet({
         </button>
       </div>
 
-      {(genM.error || researchM.error) && (
+      {(genM.error || researchM.error || humanM.error) && (
         <div className="mt-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-          {(genM.error || researchM.error)?.message}
+          {(genM.error || researchM.error || humanM.error)?.message}
         </div>
       )}
 
