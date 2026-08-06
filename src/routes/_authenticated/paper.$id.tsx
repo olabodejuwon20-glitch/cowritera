@@ -13,7 +13,7 @@ import { MobileAppLayout, Breadcrumbs, StatusBanner, Skeleton } from "@/componen
 import { BottomSheet, SideDrawer } from "@/components/sheets";
 import { getPaper, updateSection, updateProject } from "@/lib/papers.functions";
 import { CoverPreview } from "@/components/cover-preview";
-import { buildSubmissionLine } from "@/lib/export-types";
+import { buildSubmissionLine, normalizeColumns } from "@/lib/export-types";
 import {
   ProjectDetailsFields,
   detailsFromProject,
