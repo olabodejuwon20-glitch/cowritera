@@ -1,4 +1,4 @@
-import { formatGroupName, buildSubmissionLine, splitMemberName } from "@/lib/export-types";
+import { formatGroupName, buildSubmissionLine, memberValue, normalizeColumns } from "@/lib/export-types";
 import type { ProjectDetails } from "@/components/project-details-form";
 
 /**
@@ -15,7 +15,10 @@ export function CoverPreview({
   details: ProjectDetails;
   extra?: string;
 }) {
-  const members = details.members.filter((m) => m.name || m.matric || m.phone || m.role);
+  const columns = normalizeColumns(details.columns);
+  const members = details.members.filter(
+    (m) => m.name || m.matric || m.phone || m.role || Object.values(m.extra ?? {}).some(Boolean),
+  );
   const group = formatGroupName(details.group_name);
   const terms = buildSubmissionLine({
     courseCode: details.course_code,
@@ -40,29 +43,30 @@ export function CoverPreview({
       {line(group ? `SUBMITTED BY: ${group}` : "", "mt-6 font-semibold uppercase")}
 
       {members.length > 0 && (
-        <table className="mx-auto mt-4 w-full border-collapse text-left text-[0.9em]">
-          <thead>
-            <tr>
-              {["S/N", "SURNAME", "OTHER NAMES", "MATRIC NO", "ROLE"].map((h) => (
-                <th key={h} className="border px-2 py-1 text-center font-semibold">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m, i) => {
-              const { surname, other } = splitMemberName(m.name);
-              return (
+        /* Isolated horizontal scroll so a wide members table never widens the page */
+        <div className="-mx-2 mt-4 overflow-x-auto overscroll-x-contain px-2 [scrollbar-width:thin]">
+          <table className="mx-auto w-full min-w-[520px] border-collapse text-left text-[0.8em]">
+            <thead>
+              <tr>
+                {["S/N", ...columns.map((c) => c.label.toUpperCase())].map((h) => (
+                  <th key={h} className="whitespace-nowrap border px-1.5 py-1 text-center font-semibold">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m, i) => (
                 <tr key={i}>
-                  <td className="border px-2 py-1 text-center">{i + 1}</td>
-                  <td className="border px-2 py-1 uppercase">{surname}</td>
-                  <td className="border px-2 py-1">{other}</td>
-                  <td className="border px-2 py-1">{m.matric}</td>
-                  <td className="border px-2 py-1">{m.role}</td>
+                  <td className="border px-1.5 py-1 text-center">{i + 1}</td>
+                  {columns.map((c) => (
+                    <td key={c.key} className="border px-1.5 py-1 align-top">
+                      {memberValue({ ...m, extra: m.extra }, c.key)}
+                    </td>
+                  ))}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {line(details.lecturer_name ? `SUBMITTED TO: ${details.lecturer_name}` : "", "mt-6")}

@@ -20,6 +20,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedNewRouteImport } from './routes/_authenticated/new'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAmbassadorRouteImport } from './routes/_authenticated/ambassador'
@@ -89,6 +90,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNewRoute = AuthenticatedNewRouteImport.update({
   id: '/new',
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/ambassador': typeof AuthenticatedAmbassadorRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new': typeof AuthenticatedNewRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/ambassador': typeof AuthenticatedAmbassadorRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new': typeof AuthenticatedNewRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/ambassador': typeof AuthenticatedAmbassadorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/new': typeof AuthenticatedNewRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/admin/ambassadors': typeof AuthenticatedAdminAmbassadorsRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/ambassador'
     | '/dashboard'
     | '/new'
+    | '/projects'
     | '/invite/$token'
     | '/r/$code'
     | '/admin/ambassadors'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/ambassador'
     | '/dashboard'
     | '/new'
+    | '/projects'
     | '/invite/$token'
     | '/r/$code'
     | '/admin/ambassadors'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ambassador'
     | '/_authenticated/dashboard'
     | '/_authenticated/new'
+    | '/_authenticated/projects'
     | '/invite/$token'
     | '/r/$code'
     | '/_authenticated/admin/ambassadors'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/new': {
       id: '/_authenticated/new'
@@ -571,6 +590,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAmbassadorRoute: typeof AuthenticatedAmbassadorRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNewRoute: typeof AuthenticatedNewRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedPaperIdRoute: typeof AuthenticatedPaperIdRoute
 }
 
@@ -580,6 +600,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAmbassadorRoute: AuthenticatedAmbassadorRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNewRoute: AuthenticatedNewRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedPaperIdRoute: AuthenticatedPaperIdRoute,
 }
 

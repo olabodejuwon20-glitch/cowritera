@@ -1,32 +1,29 @@
 import { demoProject } from "./demo-content";
 import { defaultDraft, emptyDraft, type PaperDraft } from "./paper-draft";
 import {
+  BASE_COLUMNS,
   formatGroupName,
-  splitMemberName,
+  memberValue,
+  normalizeColumns,
   sanitizeForDocx,
   sanitizeForPdf,
   type ExportCover,
   type ExportInput,
-  type ExportMember,
+  type MemberColumn,
 } from "./export-types";
 
 const TIMES = "Times New Roman";
 const SIZE = 24; // 12pt half-points
 const TITLE = 26;
 
-type Row = { sn: string; surname: string; other: string; matric: string; role: string };
-
-function splitName(m: ExportMember): { surname: string; other: string } {
-  if (m.surname || m.otherName) return { surname: m.surname ?? "", other: m.otherName ?? "" };
-  return splitMemberName(String(m.name ?? ""));
-}
+type Row = string[];
 
 /** True only for the downloadable sample paper (no user payload at all). */
 function isSampleRequest(input?: ExportInput): boolean {
   return !input || Object.keys(input).length === 0;
 }
 
-function resolveCover(input?: ExportInput): { cover: Required<Pick<ExportCover, "institution">> & ExportCover; rows: Row[]; isDemo: boolean } {
+function resolveCover(input?: ExportInput): { cover: Required<Pick<ExportCover, "institution">> & ExportCover; rows: Row[]; columns: MemberColumn[]; isDemo: boolean } {
   const isDemo = isSampleRequest(input);
   const c: ExportCover = (!isDemo ? input?.cover ?? {} : undefined) ?? {
     institution: demoProject.institution,
@@ -40,20 +37,13 @@ function resolveCover(input?: ExportInput): { cover: Required<Pick<ExportCover, 
     })),
   };
 
-  const rows: Row[] = (c.members ?? [])
-    .map((m, i) => {
-      const { surname, other } = splitName(m);
-      return {
-        sn: String(m.sn ?? i + 1),
-        surname: surname.toUpperCase(),
-        other,
-        matric: m.matric ?? "",
-        role: m.role ?? "",
-      };
-    })
-    .filter((r) => r.surname || r.other || r.matric);
+  const columns: MemberColumn[] = normalizeColumns(c.columns ?? BASE_COLUMNS);
 
-  return { cover: { institution: c.institution ?? "", ...c }, rows, isDemo };
+  const rows: Row[] = (c.members ?? [])
+    .map((m, i) => [String(m.sn ?? i + 1), ...columns.map((col) => memberValue(m, col.key))])
+    .filter((r) => r.slice(1).some((v) => v.trim()));
+
+  return { cover: { institution: c.institution ?? "", ...c }, rows, columns, isDemo };
 }
 
 function resolveDraft(input?: ExportInput): PaperDraft {
@@ -86,13 +76,24 @@ function outlineEntries(d: PaperDraft, cover: ExportCover) {
   return out;
 }
 
-const HEADERS = ["S/N", "SURNAME", "OTHER NAMES", "MATRIC NO", "ROLE"];
+function headersFor(columns: MemberColumn[]): string[] {
+  return ["S/N", ...columns.map((c) => c.label.toUpperCase())];
+}
+
+function widthsFor(count: number, total: number): number[] {
+  const sn = Math.round(total * 0.08);
+  const rest = total - sn;
+  const each = Math.floor(rest / Math.max(1, count - 1));
+  const cols = [sn, ...Array.from({ length: count - 1 }, () => each)];
+  cols[cols.length - 1] += total - cols.reduce((a, b) => a + b, 0);
+  return cols;
+}
 
 /* ------------------------------- DOCX ---------------------------------- */
 
 export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
   const d = resolveDraft(input);
-  const { cover, rows } = resolveCover(input);
+  const { cover, rows, columns } = resolveCover(input);
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     AlignmentType, PageBreak, WidthType, BorderStyle,
@@ -125,7 +126,8 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
       children: [new TextRun({ text: t(text), bold: true, font: TIMES, size: SIZE })],
     });
 
-  const colWidths = [700, 2200, 2600, 2160, 1700]; // 9360 total
+  const HEADERS = headersFor(columns);
+  const colWidths = widthsFor(HEADERS.length, 9360);
   const mkCell = (text: string, i: number, boldCell = false) =>
     new TableCell({
       borders: cellBorders,
@@ -140,9 +142,7 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
         columnWidths: colWidths,
         rows: [
           new TableRow({ children: HEADERS.map((h, i) => mkCell(h, i, true)) }),
-          ...rows.map((r) =>
-            new TableRow({ children: [r.sn, r.surname, r.other, r.matric, r.role].map((v, i) => mkCell(v, i)) })
-          ),
+          ...rows.map((r) => new TableRow({ children: r.map((v, i) => mkCell(v, i)) })),
         ],
       })
     : null;
@@ -232,6 +232,12 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
     }],
   });
 
+  // Packer.toBuffer relies on Node Buffer and fails in the browser — use the
+  // Blob packer whenever we are running client-side.
+  if (typeof window !== "undefined") {
+    const blob = await Packer.toBlob(doc);
+    return new Uint8Array(await blob.arrayBuffer());
+  }
   const buffer = await Packer.toBuffer(doc);
   return new Uint8Array(buffer);
 }
@@ -240,7 +246,7 @@ export async function buildDocx(input?: ExportInput): Promise<Uint8Array> {
 
 export async function buildPdf(input?: ExportInput): Promise<Uint8Array> {
   const d = resolveDraft(input);
-  const { cover, rows } = resolveCover(input);
+  const { cover, rows, columns } = resolveCover(input);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.TimesRoman);
@@ -339,7 +345,8 @@ export async function buildPdf(input?: ExportInput): Promise<Uint8Array> {
   y -= 12;
 
   if (rows.length) {
-    const cols = [34, 110, 140, 116, 68]; // 468pt = content width
+    const HEADERS = headersFor(columns);
+    const cols = widthsFor(HEADERS.length, 468); // 468pt = content width
     const tableX = (pageW - cols.reduce((a, b) => a + b, 0)) / 2;
     const rowH = 20;
     const drawRow = (cells: string[], isHead = false) => {
@@ -356,7 +363,7 @@ export async function buildPdf(input?: ExportInput): Promise<Uint8Array> {
       y -= rowH;
     };
     drawRow(HEADERS, true);
-    rows.forEach((r) => drawRow([r.sn, r.surname, r.other, r.matric, r.role]));
+    rows.forEach((r) => drawRow(r));
   }
 
   y -= 20;

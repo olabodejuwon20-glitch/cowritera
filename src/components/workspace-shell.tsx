@@ -136,7 +136,7 @@ const GROUPS: NavGroup[] = [
     title: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: Home, exact: true },
-      { to: "/dashboard", label: "My Projects", icon: FolderKanban },
+      { to: "/projects", label: "My Projects", icon: FolderKanban },
       { to: "/new", label: "New Project", icon: Plus },
       { to: "/faq", label: "FAQ", icon: HelpCircle },
     ],
@@ -308,7 +308,7 @@ export function CardSkeleton() {
 
 const TABS: { to: string; label: string; icon: typeof Home; match: (p: string) => boolean }[] = [
   { to: "/dashboard", label: "Home", icon: Home, match: (p) => p === "/dashboard" },
-  { to: "/new", label: "New", icon: Plus, match: (p) => p.startsWith("/new") },
+  { to: "/projects", label: "Projects", icon: FolderKanban, match: (p) => p.startsWith("/projects") || p.startsWith("/paper") },
   { to: "/faq", label: "Help", icon: HelpCircle, match: (p) => p.startsWith("/faq") },
   { to: "/account", label: "You", icon: Settings, match: (p) => p.startsWith("/account") },
 ];
